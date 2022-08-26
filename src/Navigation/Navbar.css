@@ -1,0 +1,9 @@
+.dropdown-toggle::after {
+	display: none !important;
+}
+
+.profile-picture {
+	border-radius: 50%;
+	width: 24px;
+	margin-right: 8px;
+}
