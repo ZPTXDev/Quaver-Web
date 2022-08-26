@@ -374,7 +374,9 @@ class Guild extends React.Component {
 						</Col>
 					</Row>
 				</Container>
-				<br />
+				<footer className="py-3 my-4">
+					<p className="text-center text-muted">Quaver Version: {this.props.version}</p>
+				</footer>
 			</>
 		);
 	}

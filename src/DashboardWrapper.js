@@ -59,7 +59,7 @@ class DashboardWrapper extends React.Component {
 					if ((b.permissions & 0x20) !== 0 && (a.permissions & 0x20) === 0) return 1;
 					return a.name.localeCompare(b.name);
 				});
-				this.setState({ guilds, msg: null });
+				this.setState({ guilds, version: rsp.version, msg: null });
 			});
 		});
 	}
@@ -68,7 +68,7 @@ class DashboardWrapper extends React.Component {
 		return this.state.msg ?? (
 			<>
 				<Navbar theme={this.state.theme} toggleTheme={this.toggleTheme} user={this.state.user} />
-				<Dashboard theme={this.state.theme} guilds={this.state.guilds} />
+				<Dashboard theme={this.state.theme} guilds={this.state.guilds} version={this.state.version} />
 			</>
 		)
 	}

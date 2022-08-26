@@ -109,7 +109,7 @@ class GuildWrapper extends React.Component {
                     this.setState({ msg: <Navigate to='/dashboard'></Navigate> });
                     return;
                 }
-				this.setState({ guild });
+				this.setState({ guild, version: rsp.version });
                 this.socket.emit('join', [this.props.params.id], joinCallback => {
                     if (joinCallback.status !== 'success') {
                         this.setState({ msg: <Navigate to='/dashboard'></Navigate> });
@@ -275,6 +275,7 @@ class GuildWrapper extends React.Component {
                     volumeRef={this.volumeRef}
                     user={this.state.user}
                     guild={this.state.guild}
+                    version={this.state.version}
                     connected={this.state.connected}
                     queue={this.state.queue}
                     volume={this.state.volume}
