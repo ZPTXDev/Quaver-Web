@@ -124,7 +124,8 @@ class Guild extends React.Component {
 													min={0}
 													max={this.props.playing.nothingPlaying ? 0 : this.props.playing.duration / 1000}
 													defaultValue={this.props.playing.nothingPlaying ? 0 : this.props.playing.elapsed / 1000}
-													disabled={this.props.playing.duration === 0
+													disabled={this.props.playing.track.requester !== this.props.user.id
+														|| this.props.playing.duration === 0
 														|| this.props.playing.nothingPlaying
 														|| this.props.playing.track?.isStream
 														|| this.props.pauseTimeout}
