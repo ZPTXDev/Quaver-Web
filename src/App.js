@@ -1,9 +1,9 @@
-import { io } from "socket.io-client";
 import React from "react";
-import './App.css';
-import withRouter from "./withRouter.js";
 import Button from "react-bootstrap/Button";
 import { Navigate } from "react-router-dom";
+import { io } from "socket.io-client";
+import './App.css';
+import withRouter from "./withRouter.js";
 
 const redirectURI = `${window.location.protocol}//${window.location.host}`;
 const authorizationLink = `https://discord.com/api/oauth2/authorize?client_id=${process.env.REACT_APP_DISCORD_CLIENT_ID}&redirect_uri=${redirectURI}&response_type=code&scope=identify%20guilds&prompt=none`;
@@ -14,8 +14,8 @@ class App extends React.Component {
     this.state = {
       msg:
       <>
-        <div className='loader-container'>
-          <h3 className='loading'>Loading...</h3>
+        <div className={`loader-container loader-container-${this.props.cookies.theme ?? 'light'}`}>
+          <h3 className={`loading loading-${this.props.cookies.theme ?? 'light'}`}>Loading...</h3>
         </div>
       </>
     };
@@ -27,8 +27,8 @@ class App extends React.Component {
       this.setState({
         msg:
         <>
-          <div className='loader-container'>
-            <h3 className='loading'>Loading...</h3>
+          <div className={`loader-container loader-container-${this.props.cookies.theme ?? 'light'}`}>
+            <h3 className={`loading loading-${this.props.cookies.theme ?? 'light'}`}>Loading...</h3>
           </div>
           <Navigate to='/offline'></Navigate>
         </>
@@ -40,7 +40,7 @@ class App extends React.Component {
         msg:
         <>
           <link href="https://cdn.jsdelivr.net/gh/hung1001/font-awesome-pro-v6@18657a9/css/all.min.css" rel="stylesheet" type="text/css" />
-          <div className='loader-container'>
+          <div className='loader-container loader-container-dark'>
             <h3 className='front'>Quaver</h3>
             <Button size="lg" variant="light" href={authorizationLink}><i className="fa-brands fa-discord fa-fw"></i> Login with Discord</Button>
           </div>
@@ -56,8 +56,8 @@ class App extends React.Component {
           this.setState({
             msg:
             <>
-              <div className='loader-container'>
-                <h3 className='loading'>Loading...</h3>
+              <div className={`loader-container loader-container-${this.props.cookies.theme ?? 'light'}`}>
+                <h3 className={`loading loading-${this.props.cookies.theme ?? 'light'}`}>Loading...</h3>
               </div>
               <Navigate to='/dashboard'></Navigate>
             </>
@@ -69,8 +69,8 @@ class App extends React.Component {
       this.setState({
         msg:
         <>
-          <div className='loader-container'>
-            <h3 className='loading'>Loading...</h3>
+          <div className={`loader-container loader-container-${this.props.cookies.theme ?? 'light'}`}>
+            <h3 className={`loading loading-${this.props.cookies.theme ?? 'light'}`}>Loading...</h3>
           </div>
           <Navigate to='/dashboard'></Navigate>
         </>

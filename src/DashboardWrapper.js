@@ -12,8 +12,8 @@ class DashboardWrapper extends React.Component {
 		this.state = {
 			msg: (
 				<>
-					<div className='loader-container'>
-						<h3 className='loading'>Loading...</h3>
+					<div className={`loader-container loader-container-${this.props.cookies.theme ?? 'light'}`}>
+						<h3 className={`loading loading-${this.props.cookies.theme ?? 'light'}`}>Loading...</h3>
 					</div>
 				</>
 			),

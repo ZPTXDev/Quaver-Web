@@ -26,15 +26,29 @@ body {
 	justify-content: center;
 	align-items: center;
 	position: fixed;
-	background: rgb(0, 0, 0);
 	z-index: 1;
 	animation: loading-fade 0.2s 1 linear;
+}
+
+.loader-container-dark {
+	background: rgb(0, 0, 0);
+}
+
+.loader-container-light {
+	background: rgb(255, 255, 255);
 }
 
 .loading {
 	animation: loading-anim 1.2s infinite linear both;
 	opacity: 1;
+}
+
+.loading-dark {
 	color: white;
+}
+
+.loading-light {
+	color: black;
 }
 
 .front {
