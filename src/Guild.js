@@ -244,7 +244,7 @@ class Guild extends React.Component {
 															? 'light'
 															: 'gray'}
 													disabled={!this.props.connected || this.props.pauseTimeout}
-													className={`me-1 text-${this.props.theme}`}
+													className={`me-1 text-${this.props.filters.bassboost ? 'light' : this.props.theme}`}
 													onMouseDown={event => event.preventDefault()}
 													onClick={() => this.props.setBassboost(!this.props.filters.bassboost)}>
 													<i className="fa-solid fa-headphones-alt fa-fw"></i> Bassboost
@@ -256,7 +256,7 @@ class Guild extends React.Component {
 														: this.props.theme === 'dark'
 															? 'light' : 'gray'}
 													disabled={!this.props.connected || this.props.pauseTimeout}
-													className={`me-1 text-${this.props.theme}`}
+													className={`me-1 text-${this.props.filters.nightcore ? 'light' : this.props.theme}`}
 													onMouseDown={event => event.preventDefault()}
 													onClick={() => this.props.setNightcore(!this.props.filters.nightcore)}>
 														<i className="fa-solid fa-moon fa-fw"></i> Nightcore
