@@ -1,10 +1,10 @@
+import $ from 'jquery';
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { io } from "socket.io-client";
-import Navbar from './Navigation/Navbar.js';
 import Guild from './Guild.js';
+import Navbar from './Navigation/Navbar.js';
 import withRouter from './withRouter.js';
-import $ from 'jquery';
 
 class GuildWrapper extends React.Component {
 	constructor(props) {
@@ -77,6 +77,7 @@ class GuildWrapper extends React.Component {
 
 	componentDidMount() {
         if (!this.props.cookies.token) {
+            this.props.setCookie('destination', this.props.params.id, { path: '/' });
 			this.setState({ msg: <Navigate to='/'></Navigate> });
 			return;
 		}

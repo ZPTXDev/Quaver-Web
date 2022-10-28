@@ -1,10 +1,10 @@
+import $ from 'jquery';
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { io } from "socket.io-client";
-import Navbar from './Navigation/Navbar.js';
 import Dashboard from './Dashboard.js';
+import Navbar from './Navigation/Navbar.js';
 import withRouter from './withRouter.js';
-import $ from 'jquery';
 
 class DashboardWrapper extends React.Component {
 	constructor(props) {
@@ -34,6 +34,11 @@ class DashboardWrapper extends React.Component {
 	componentDidMount() {
 		if (!this.props.cookies.token) {
 			this.setState({ msg: <Navigate to='/'></Navigate> });
+			return;
+		}
+		if (this.props.cookies.destination) {
+			this.props.removeCookie('destination');
+			this.setState({ msg: <Navigate to={`/guild/${this.props.cookies.destination}`}></Navigate> });
 			return;
 		}
 		const socket = io(process.env.REACT_APP_WEBSOCKET_HOST);
