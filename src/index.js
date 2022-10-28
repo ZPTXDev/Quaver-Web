@@ -1,16 +1,17 @@
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/dist/js/bootstrap.js';
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en.json';
+import 'mdb-react-ui-kit/dist/css/mdb.min.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import App from './App.js';
 import DashboardWrapper from './DashboardWrapper.js';
 import GuildWrapper from './GuildWrapper.js';
+import './index.css';
 import Offline from './Offline.js';
 import reportWebVitals from './reportWebVitals.js';
-import TimeAgo from 'javascript-time-ago'
-import en from 'javascript-time-ago/locale/en.json'
-import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap/dist/js/bootstrap.js';
-import './index.css';
 
 TimeAgo.addDefaultLocale(en)
 

@@ -11,6 +11,7 @@
     "css-loader": "^6.7.1",
     "javascript-time-ago": "^2.5.7",
     "jquery": "^3.6.0",
+    "mdb-react-ui-kit": "^4.2.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.5.0",
     "react-cookie": "^4.1.1",

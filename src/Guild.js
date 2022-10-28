@@ -1,21 +1,13 @@
+import { MDBBadge, MDBBreadcrumb, MDBBreadcrumbItem, MDBBtn, MDBBtnGroup, MDBCard, MDBCardBody, MDBCardFooter, MDBCardHeader, MDBCardSubTitle, MDBCardText, MDBCardTitle, MDBCol, MDBContainer, MDBListGroup, MDBListGroupItem, MDBRow } from 'mdb-react-ui-kit';
 import React from 'react';
-import Breadcrumb from 'react-bootstrap/Breadcrumb';
-import Button from 'react-bootstrap/Button';
-import ButtonGroup from 'react-bootstrap/ButtonGroup';
-import Col from 'react-bootstrap/Col';
-import Card from 'react-bootstrap/Card';
-import Container from 'react-bootstrap/Container';
-import Form from 'react-bootstrap/Form';
-import Row from 'react-bootstrap/Row';
-import ListGroup from 'react-bootstrap/ListGroup';
-import Badge from 'react-bootstrap/Badge';
+import { Card, Form } from 'react-bootstrap';
 import Alert from 'react-bootstrap/Alert';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
+import ReactTimeAgo from 'react-time-ago';
 import './App.css';
 import './Guild.css';
 import withRouter from './withRouter.js';
-import ReactTimeAgo from 'react-time-ago';
 
 class Guild extends React.Component {
 	constructor(props) {
@@ -72,21 +64,21 @@ class Guild extends React.Component {
 						<Toast.Body>Resuming your session</Toast.Body>
 					</Toast>
 				</ToastContainer>
-				<Container>
-					<Card body bg={this.props.theme} className="mb-2">
-						<Breadcrumb className="remove-bottom-margin">
-							<Breadcrumb.Item href="/dashboard" onClick={event => {this.props.navigate('/dashboard'); event.preventDefault();}}>Dashboard</Breadcrumb.Item>
-							<Breadcrumb.Item className={this.props.theme === 'dark' && 'text-light'} active><img className="guild-picture" src={this.props.guild.icon ? `https://cdn.discordapp.com/icons/${this.props.guild.id}/${this.props.guild.icon}.png` : 'https://cdn.discordapp.com/embed/avatars/5.png'} alt="Guild" />{this.props.guild.name}</Breadcrumb.Item>
-						</Breadcrumb>
-					</Card>
+				<MDBContainer>
+					<MDBCard body background={this.props.theme === 'dark' ? 'gray' : 'light'} className="mb-2">
+						<MDBBreadcrumb className="remove-bottom-margin m-3">
+							<MDBBreadcrumbItem onClick={event => {this.props.navigate('/dashboard'); event.preventDefault();}}><a href="/dashboard">Dashboard</a></MDBBreadcrumbItem>
+							<MDBBreadcrumbItem className={this.props.theme === 'dark' && 'text-light'} active><img className="guild-picture" src={this.props.guild.icon ? `https://cdn.discordapp.com/icons/${this.props.guild.id}/${this.props.guild.icon}.png` : 'https://cdn.discordapp.com/embed/avatars/5.png'} alt="Guild" />{this.props.guild.name}</MDBBreadcrumbItem>
+						</MDBBreadcrumb>
+					</MDBCard>
 					{this.props.timeout && <Alert variant="warning" className="mb-2"><strong>Quaver will leave soon.</strong> To continue your session, <code>/play</code> something!</Alert>}
 					{this.props.pauseTimeout && <Alert variant="warning" className="mb-2"><strong>Quaver will leave soon.</strong> To resume your session, join Quaver's channel.</Alert>}
 					{this.props.connected && this.props.playing.nothingPlaying && !this.props.timeout && <Alert variant="success" className="mb-2"><strong>24/7 mode enabled!</strong> Quaver will not automatically leave your channel.</Alert>}
-					<Row className="gx-2 gy-2">
-						<Col xs={12} lg={4}>
-							<Row className="gy-2">
-								<Col xs={12}>
-									<Card bg={this.props.theme} text={this.props.theme === 'dark' ? 'light' : 'dark'}>
+					<MDBRow className="gx-2 gy-2">
+						<MDBCol xs={12} lg={4}>
+							<MDBRow className="gy-2">
+								<MDBCol xs={12}>
+									<MDBCard background={this.props.theme === 'dark' ? 'gray' : 'light'} className={this.props.theme === 'dark' ? 'text-white' : ''}>
 										{!this.props.playing.nothingPlaying
 											&& this.props.playing.track.sourceName === 'youtube'
 											&& <Card.Img
@@ -96,8 +88,8 @@ class Guild extends React.Component {
 												onLoad={() => {
 													if (this.imgRef.current.naturalWidth === 120) this.imgRef.current.src = this.imgRef.current.src.replace('maxresdefault', 'hqdefault');
 												}} />}
-										<Card.Body>
-											<Card.Title
+										<MDBCardBody>
+											<MDBCardTitle
 												className="truncate-text"
 												style={{ lineHeight: 'normal' }}
 												title={this.props.playing.nothingPlaying
@@ -110,22 +102,24 @@ class Guild extends React.Component {
 														? 'Nothing playing'
 														: 'Not in a voice channel'
 													: this.props.playing.track.title}
-											</Card.Title>
+											</MDBCardTitle>
 											{!this.props.playing.nothingPlaying
-												&& <Card.Subtitle
+												&& <MDBCardSubTitle
 													className="mb-2 text-muted truncate-text"
 													style={{ lineHeight: 'normal' }}
 													text={this.props.playing.track.author}>
 														{this.props.playing.track.author}
-												</Card.Subtitle>}
-											<div className="nowPlaying">
-												<span className="nowPlaying-value-left">
+												</MDBCardSubTitle>}
+											<div className="d-flex">
+												<span className="justify-content-start">
 													{this.props.playing.track?.isStream
 														&& !this.props.playing.nothingPlaying
-															? <Badge bg="danger">LIVE</Badge>
+															? <MDBBadge color="danger">LIVE</MDBBadge>
 															: this.msToTimeString(this.msToTime(this.props.playing.nothingPlaying ? 0 : this.props.playing.elapsed), true)}
 												</span>
+												<div className="flex-grow-1 mx-2">
 												<Form.Range
+													disabletooltip="true"
 													ref={this.props.playRef}
 													min={0}
 													max={this.props.playing.nothingPlaying ? 0 : this.props.playing.duration / 1000}
@@ -134,7 +128,6 @@ class Guild extends React.Component {
 														|| this.props.playing.nothingPlaying
 														|| this.props.playing.track?.isStream
 														|| this.props.pauseTimeout}
-													className="mx-2"
 													onPointerDown={() => this.props.setUpdatePlay(false)}
 													onPointerUp={event => this.props.seek(event.target.value * 1000)}
 													onInput={event => {
@@ -144,88 +137,93 @@ class Guild extends React.Component {
 													}}
 													style={{ touchAction: "none" }}
 												/>
+												</div>
 												{(!this.props.playing.track?.isStream || this.props.playing.nothingPlaying)
-													&& <span className="nowPlaying-value-right">
+													&& <span className="justify-content-end">
 														{this.msToTimeString(this.msToTime(this.props.playing.nothingPlaying ? 0 : this.props.playing.duration), true)}
 													</span>}
 											</div>
 											{!this.props.playing.nothingPlaying
 												&& <div className="status mt-2">
 													<div>
-														<Badge bg="secondary"><i className="fa-solid fa-user-music fa-fw"></i> {this.props.playing.track.requesterTag}</Badge>
+														<MDBBadge color="secondary" className={this.props.theme === 'dark' ? 'text-dark' : ''}><i className="fa-solid fa-user-music fa-fw"></i> {this.props.playing.track.requesterTag}</MDBBadge>
 													</div>
 													{this.props.playing.skip
 														&& <div className="status-value-right">
-															<Badge
-																bg={this.props.playing.skip.users.includes(this.props.user.id) ? 'success' : 'warning'}
-																text={this.props.playing.skip.users.includes(this.props.user.id) ? 'light' : 'dark'}
+															<MDBBadge
+																color={this.props.playing.skip.users.includes(this.props.user.id) ? 'success' : 'warning'}
+																className={`text-${this.props.playing.skip.users.includes(this.props.user.id) ? 'light' : 'dark'}`}
 															>
 																	Skipping {this.props.playing.skip.users.length}/{this.props.playing.skip.required}
-															</Badge>
+															</MDBBadge>
 														</div>}
 												</div>}
 											{this.props.connected
 												&& <div className="status">
 													<div>
-														<Badge bg="secondary"><i className="fa-solid fa-volume fa-fw"></i> {this.props.channel}</Badge>
+														<MDBBadge color="secondary" className={this.props.theme === 'dark' ? 'text-dark' : ''}><i className="fa-solid fa-volume fa-fw"></i> {this.props.channel}</MDBBadge>
 													</div>
 													{(this.props.timeout || this.props.pauseTimeout)
 														&& <div className="status-value-right">
-															<Badge bg="warning" text="dark">
+															<MDBBadge color="warning" className="text-dark">
 																Leaving <ReactTimeAgo future date={this.props.timeout || this.props.pauseTimeout} />
-															</Badge>
+															</MDBBadge>
 														</div>}
 												</div>}
 											{this.props.connected
 												&& <div className="status">
 													<div>
-														<Badge bg="secondary"><i className="fa-solid fa-hashtag fa-fw"></i> {this.props.textChannel}</Badge>
+														<MDBBadge color="secondary" className={this.props.theme === 'dark' ? 'text-dark' : ''}><i className="fa-solid fa-hashtag fa-fw"></i> {this.props.textChannel}</MDBBadge>
 													</div>
 												</div>}
-										</Card.Body>
-									</Card>
-								</Col>
-								<Col xs={12}>
-									<Card bg={this.props.theme} text={this.props.theme === 'dark' ? 'light' : 'dark'}>
-										<Card.Body>
+										</MDBCardBody>
+									</MDBCard>
+								</MDBCol>
+								<MDBCol xs={12}>
+									<MDBCard background={this.props.theme === 'dark' ? 'gray' : 'light'} className={this.props.theme === 'dark' ? 'text-white' : ''}>
+										<MDBCardBody>
 											<div className="text-center mb-2">
-												<ButtonGroup aria-label="Media controls">
-													<Button
+												<MDBBtnGroup aria-label="Media controls">
+													<MDBBtn
 														size="lg"
-														variant={this.props.loop === 0
+														color={this.props.loop === 0
 															?
 																this.props.theme === 'dark'
 																	? 'light'
-																	: 'dark'
+																	: 'gray'
 															: 'success'}
+														className={`text-${this.props.loop !== 0 ? 'light' : this.props.theme}`}
 														disabled={!this.props.connected || this.props.pauseTimeout}
 														onMouseDown={event => event.preventDefault()}
 														onClick={() => this.props.setLoop(this.props.loop + 1 > 2 ? 0 : this.props.loop + 1)}>
 														<i className={this.props.loop !== 2 ? "fa-solid fa-repeat fa-fw" : "fa-solid fa-repeat-1 fa-fw"}></i>
-													</Button>
-													<Button
+													</MDBBtn>
+													<MDBBtn
 														size="lg"
-														variant={this.props.theme === 'dark' ? 'light' : 'dark'}
+														color={this.props.theme === 'dark' ? 'light' : 'gray'}
+														className={`text-${this.props.theme}`}
 														disabled={!this.props.connected
 															|| this.props.pauseTimeout
 															|| this.props.queue.length < 2}
 														onMouseDown={event => event.preventDefault()}
 														onClick={() => this.props.shuffle()}>
 														<i className="fa-solid fa-shuffle fa-fw"></i>
-													</Button>
-													<Button
+													</MDBBtn>
+													<MDBBtn
 														size="lg"
-														variant={this.props.theme === 'dark' ? 'light' : 'dark'}
+														color={this.props.theme === 'dark' ? 'light' : 'gray'}
+														className={`text-${this.props.theme}`}
 														disabled={!this.props.connected
 															|| this.props.pauseTimeout
 															|| this.props.playing.nothingPlaying}
 														onMouseDown={event => event.preventDefault()}
 														onClick={() => this.props.setPaused(!this.props.paused)}>
 														<i className={this.props.paused ? "fa-solid fa-play fa-fw" : "fa-solid fa-pause fa-fw"}></i>
-													</Button>
-													<Button
+													</MDBBtn>
+													<MDBBtn
 														size="lg"
-														variant={this.props.theme === 'dark' ? 'light' : 'dark'}
+														color={this.props.theme === 'dark' ? 'light' : 'gray'}
+														className={`text-${this.props.theme}`}
 														disabled={!this.props.connected
 															|| this.props.pauseTimeout
 															|| this.props.playing.nothingPlaying
@@ -233,38 +231,38 @@ class Guild extends React.Component {
 														onMouseDown={event => event.preventDefault()}
 														onClick={() => this.props.skip()}>
 														<i className="fa-solid fa-forward fa-fw"></i>
-													</Button>
-												</ButtonGroup>
+													</MDBBtn>
+												</MDBBtnGroup>
 											</div>
 											<div className="text-center mb-2 button-wrap">
-												<Button
+												<MDBBtn
 													size="sm"
-													variant={this.props.filters.bassboost
+													color={this.props.filters.bassboost
 														? 'success'
 														: this.props.theme === 'dark'
 															? 'light'
-															: 'dark'}
+															: 'gray'}
 													disabled={!this.props.connected || this.props.pauseTimeout}
-													className="me-1"
+													className={`me-1 text-${this.props.theme}`}
 													onMouseDown={event => event.preventDefault()}
 													onClick={() => this.props.setBassboost(!this.props.filters.bassboost)}>
 													<i className="fa-solid fa-headphones-alt fa-fw"></i> Bassboost
-												</Button>
-												<Button
+												</MDBBtn>
+												<MDBBtn
 													size="sm"
-													variant={this.props.filters.nightcore
+													color={this.props.filters.nightcore
 														? 'success'
 														: this.props.theme === 'dark'
-															? 'light' : 'dark'}
+															? 'light' : 'gray'}
 													disabled={!this.props.connected || this.props.pauseTimeout}
-													className="me-1"
+													className={`me-1 text-${this.props.theme}`}
 													onMouseDown={event => event.preventDefault()}
 													onClick={() => this.props.setNightcore(!this.props.filters.nightcore)}>
 														<i className="fa-solid fa-moon fa-fw"></i> Nightcore
-												</Button>
-												<Button
+												</MDBBtn>
+												<MDBBtn
 													size="sm"
-													variant="primary"
+													color="primary"
 													disabled={
 														!this.props.connected
 															|| this.props.playing.nothingPlaying
@@ -273,7 +271,7 @@ class Guild extends React.Component {
 													target="_blank"
 													onMouseDown={event => event.preventDefault()}>
 													<i className="fa-solid fa-arrow-up-right-from-square fa-fw"></i>
-												</Button>
+												</MDBBtn>
 											</div>
 											<div className="text-center volume mx-auto">
 												<div className="volume-elements me-2">
@@ -313,23 +311,22 @@ class Guild extends React.Component {
 													<p className="my-0">{this.props.volume}%</p>
 												</div>
 											</div>
-										</Card.Body>
-									</Card>
-								</Col>
-							</Row>
-						</Col>
-						<Col xs={12} lg={8}>
-							<Card bg={this.props.theme} text={this.props.theme === 'dark' ? 'light' : 'dark'}>
-								<Card.Header>Queue</Card.Header>
-								<Card.Body className={this.props.queue?.length !== 0 && 'p-0'}>
+										</MDBCardBody>
+									</MDBCard>
+								</MDBCol>
+							</MDBRow>
+						</MDBCol>
+						<MDBCol xs={12} lg={8}>
+							<MDBCard background={this.props.theme === 'dark' ? 'gray' : 'light'} className={this.props.theme === 'dark' ? 'text-white' : ''}>
+								<MDBCardHeader>Queue</MDBCardHeader>
+								<MDBCardBody className={this.props.queue?.length !== 0 && 'p-0'}>
 									{this.props.queue?.length === 0
-										? <Card.Text>Nothing coming up</Card.Text>
-										: <ListGroup as="ol" numbered variant="flush">
+										? <MDBCardText>Nothing coming up</MDBCardText>
+										: <MDBListGroup numbered className="list-group-flush">
 											{this.props.queue.map((track, index) => (
-												<ListGroup.Item
-													as="li"
-													className="d-flex justify-content-start align-items-start"
-													variant={this.props.theme === 'dark' ? 'dark' : undefined}
+												<MDBListGroupItem
+													color={this.props.theme === 'dark' ? 'gray' : ''}
+													className={`d-flex justify-content-start align-items-start${this.props.theme === 'dark' ? ' text-white' : ''}`}
 													key={track.identifier}>
 													<div className="ms-2" style={{ minWidth: '0' }}>
 														<div className="fw-bold d-flex">
@@ -337,43 +334,43 @@ class Guild extends React.Component {
 																{track.title}
 															</span>
 															{track.isStream
-																? <Badge bg="danger">LIVE</Badge>
-																: <Badge bg="dark">{this.msToTimeString(this.msToTime(track.length), true)}</Badge>}
+																? <MDBBadge color="danger">LIVE</MDBBadge>
+																: <MDBBadge color={this.props.theme === 'dark' ? 'light' : 'gray'} className={this.props.theme === 'dark' ? 'text-dark' : ''}>{this.msToTimeString(this.msToTime(track.length), true)}</MDBBadge>}
 														</div>
 														<small style={{ display: 'block' }}>{track.author}</small>
-														<Badge bg="secondary"><i className="fa-solid fa-user-music fa-fw"></i> {track.requesterTag}</Badge>
+														<MDBBadge color="secondary" className={this.props.theme === 'dark' ? 'text-dark' : ''}><i className="fa-solid fa-user-music fa-fw"></i> {track.requesterTag}</MDBBadge>
 													</div>
 													<div className="ps-4 ms-auto my-auto">
-														<ButtonGroup aria-label="Action buttons">
+														<MDBBtnGroup aria-label="Action buttons">
 															{track.requester === this.props.user.id
-																&& <Button
-																	variant="danger"
+																&& <MDBBtn
+																	color="danger"
 																	onMouseDown={event => event.preventDefault()}
 																	onClick={() => this.props.remove(index)}>
 																	<i className="fa-solid fa-close fa-fw"></i>
-																</Button>}
-															<Button
+																</MDBBtn>}
+															<MDBBtn
 																href={track.uri}
 																target="_blank"
 																onMouseDown={event => event.preventDefault()}>
 																<i className="fa-solid fa-arrow-up-right-from-square fa-fw"></i>
-															</Button>
-														</ButtonGroup>
+															</MDBBtn>
+														</MDBBtnGroup>
 													</div>
-												</ListGroup.Item>
+												</MDBListGroupItem>
 											))}
-										</ListGroup>}
-								</Card.Body>
+										</MDBListGroup>}
+								</MDBCardBody>
 								{this.props.queue?.length !== 0
-									&& <Card.Footer>
+									&& <MDBCardFooter>
 										<small className={this.props.theme === 'dark' ? 'text-light' : 'text-muted'}>
 											Queue duration: {this.msToTimeString(this.msToTime(this.props.queue.map(track => track.length).reduce((acc, a) => acc + a, 0)), true)}
 										</small>
-									</Card.Footer>}
-							</Card>
-						</Col>
-					</Row>
-				</Container>
+									</MDBCardFooter>}
+							</MDBCard>
+						</MDBCol>
+					</MDBRow>
+				</MDBContainer>
 				<footer className="py-3 my-4">
 					<p className="text-center text-muted">Quaver Version: {this.props.version}</p>
 				</footer>

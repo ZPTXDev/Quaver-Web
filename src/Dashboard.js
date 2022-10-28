@@ -1,14 +1,10 @@
-import React from 'react';
-import Breadcrumb from 'react-bootstrap/Breadcrumb';
-import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
-import Col from 'react-bootstrap/Col';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Pagination from 'react-bootstrap/Pagination';
-import withRouter from './withRouter.js';
 import $ from 'jquery';
+import { MDBBreadcrumb, MDBBreadcrumbItem, MDBBtn, MDBCard, MDBCardBody, MDBCardImage, MDBCardTitle, MDBCol, MDBContainer, MDBPagination, MDBPaginationItem, MDBPaginationLink, MDBRow } from 'mdb-react-ui-kit';
+import React from 'react';
+import Card from 'react-bootstrap/Card';
+import Pagination from 'react-bootstrap/Pagination';
 import './App.css';
+import withRouter from './withRouter.js';
 
 const waitForFinalEvent = function () {
 	const b = {};
@@ -83,34 +79,34 @@ class Dashboard extends React.Component {
 	render() {
 		return this.state.msg ?? (
 			<>
-				<Container>
-					<Card body bg={this.props.theme} className="mb-2">
-						<Breadcrumb className="remove-bottom-margin">
-							<Breadcrumb.Item className={this.props.theme === 'dark' && 'text-light'} active>Dashboard</Breadcrumb.Item>
-						</Breadcrumb>
-					</Card>
+				<MDBContainer>
+					<MDBCard body background={this.props.theme === 'dark' ? 'gray' : 'light'} className="mb-2">
+						<MDBBreadcrumb className="remove-bottom-margin m-3">
+							<MDBBreadcrumbItem className={this.props.theme === 'dark' && 'text-light'} active>Dashboard</MDBBreadcrumbItem>
+						</MDBBreadcrumb>
+					</MDBCard>
 					{this.props.guilds.length > 0
 						? (
 							<div>
-								<Row xs={2} lg={5} className="g-2">
+								<MDBRow className="row-cols-xs-2 row-cols-lg-5 g-2">
 									{this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint))[this.state.page - 1].map(guild => 
-											<Col key={guild.id}>
-												<Card bg={this.props.theme} text={this.props.theme === 'dark' ? 'light' : 'dark'} className="h-100">
-													<Card.Img
-														variant="top"
+											<MDBCol key={guild.id}>
+												<MDBCard alignment='center' background={this.props.theme === 'dark' ? 'gray' : 'light'} className={`h-100 text-${this.props.theme === 'dark' ? 'light' : 'dark'}`}>
+													<MDBCardImage
+														position="top"
 														src={
 															guild.icon
 																? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
 																: 'https://cdn.discordapp.com/embed/avatars/5.png'
 														} />
-													<Card.Body>
-														<Card.Title className="truncate-text" style={{ lineHeight: 'normal' }} title={guild.name}>
+													<MDBCardBody>
+														<MDBCardTitle className="truncate-text" style={{ lineHeight: 'normal' }} title={guild.name}>
 															{guild.name}
-														</Card.Title>
-													</Card.Body>
-													<Button
+														</MDBCardTitle>
+													</MDBCardBody>
+													<MDBBtn
 														className="m-1"
-														variant={guild.botInGuild ? 'primary' : 'secondary'}
+														color={guild.botInGuild ? 'primary' : 'secondary'}
 														href={`/guild/${guild.id}`}
 														onMouseDown={event => event.preventDefault()}
 														onClick={event => {
@@ -119,24 +115,27 @@ class Dashboard extends React.Component {
 														}}
 														disabled={!guild.botInGuild && (guild.permissions & 0x20) === 0}>
 														{guild.botInGuild ? 'Manage' : 'Add to Server'}
-													</Button>
-												</Card>
-											</Col>
+													</MDBBtn>
+												</MDBCard>
+											</MDBCol>
 									)}
-								</Row>
-								<Pagination className="mt-2 justify-content-center">
-									<Pagination.First
-										onClick={() => this.setState({ page: 1 })}
-										disabled={this.state.page === 1} />
-									{this.state.page >= 3 && <Pagination.Ellipsis disabled />}
+								</MDBRow>
+								<MDBPagination className="mt-2 mb-0 justify-content-center">
+									<MDBPaginationItem disabled={this.state.page === 1} className={this.state.page === 1 ? 'pagination-disabled' : ''}>
+										<MDBPaginationLink onClick={() => this.setState({ page: 1 })} href='#' aria-label='First' tabIndex={this.state.page === 1 ? -1 : 0} aria-disabled={this.state.page === 1}>
+											<span aria-hidden='true'>«</span>
+										</MDBPaginationLink>
+									</MDBPaginationItem>
+									{this.state.page >= 3 && <Pagination.Ellipsis disabled className="pagination-disabled" />}
 									{this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint))
 										.map((page, i) =>
-											<Pagination.Item
-												key={i + 1}
-												active={this.state.page === i + 1}
-												onClick={() => this.setState({ page: i + 1 })}>
-												{i + 1}
-											</Pagination.Item>
+											<MDBPaginationItem key={i + 1} active={this.state.page === i + 1} aria-current={this.state.page === i + 1 ? 'page' : ''}>
+												<MDBPaginationLink
+													onClick={() => this.setState({ page: i + 1 })}
+													href={this.state.page === i + 1 ? undefined : '#'}>
+													{i + 1}
+												</MDBPaginationLink>
+											</MDBPaginationItem>
 										)
 										.filter((page, i) =>
 											[
@@ -147,11 +146,13 @@ class Dashboard extends React.Component {
 												...[this.state.page === this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length && this.state.page - 2]
 											].includes(i + 1)
 										)}
-									{this.state.page <= this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length - 2 && <Pagination.Ellipsis disabled />}
-									<Pagination.Last
-										onClick={() => this.setState({ page: this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length })}
-										disabled={this.state.page === this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length} />
-								</Pagination>
+									{this.state.page <= this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length - 2 && <Pagination.Ellipsis disabled className="pagination-disabled" />}
+									<MDBPaginationItem disabled={this.state.page === this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length} className={this.state.page === this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length ? 'pagination-disabled' : ''}>
+										<MDBPaginationLink onClick={() => this.setState({ page: this.paginate(this.props.guilds, this.numberToDisplay(this.state.breakpoint)).length })} href='#' aria-label='Last'>
+											<span aria-hidden='true'>»</span>
+										</MDBPaginationLink>
+									</MDBPaginationItem>
+								</MDBPagination>
 							</div>
 						)
 						: (
@@ -165,7 +166,7 @@ class Dashboard extends React.Component {
 							</Card>
 						)
 					}
-				</Container>
+				</MDBContainer>
 				<footer className="py-3 my-4">
 					<p className="text-center text-muted">Quaver Version: {this.props.version}</p>
 				</footer>

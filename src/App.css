@@ -7,7 +7,15 @@ body {
 }
 
 .dark-bg {
-	background-color: #000000 !important;
+	background-color: #1f1f1f !important;
+}
+
+.btn-gray, .bg-gray, .list-group-item-gray {
+	background-color: #262626 !important;
+}
+
+.pagination-disabled span, .pagination-disabled a {
+	background-color: transparent !important;
 }
 
 .loader-container {
