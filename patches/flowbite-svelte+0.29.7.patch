@@ -1,0 +1,13 @@
+diff --git a/node_modules/flowbite-svelte/forms/Range.svelte b/node_modules/flowbite-svelte/forms/Range.svelte
+index 3f61264..7d136b6 100644
+--- a/node_modules/flowbite-svelte/forms/Range.svelte
++++ b/node_modules/flowbite-svelte/forms/Range.svelte
+@@ -19,4 +19,7 @@ $: inputClass = classNames('w-full bg-gray-200 rounded-lg appearance-none cursor
+   on:click
+   on:keydown
+   on:keypress
+-  on:keyup />
++  on:keyup
++  on:pointerdown
++  on:pointerup
++  on:input />
