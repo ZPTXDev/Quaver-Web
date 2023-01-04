@@ -348,7 +348,7 @@
 <div class="container mx-auto my-4">
 	<Breadcrumb>
 		<BreadcrumbItem href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}} home>Home</BreadcrumbItem>
-		<BreadcrumbItem>{guild.name}</BreadcrumbItem>
+		<BreadcrumbItem>{guild.name} {guild.permissions}</BreadcrumbItem>
 	</Breadcrumb>
 </div>
 <div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4">
