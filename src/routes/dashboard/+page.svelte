@@ -65,6 +65,10 @@
 	}
 
 	onMount(() => {
+		if (!socket.connected) {
+			location.replace('/');
+			return;
+		}
 		socket.emit(
 			'fetchuser',
 			[data.token],
