@@ -17,6 +17,26 @@
     let authURL = '';
     $: connected = false;
     $manualLoading = false;
+    function exchange() {
+        socket.emit(
+            'exchange',
+            [code, location.origin],
+            (response: { status: string; encryptedToken: string }) => {
+                if (response.status !== 'success') location.replace('/');
+                fetch('/authenticate', { method: 'POST', body: JSON.stringify({ token: response.encryptedToken }), headers: { 'content-type': 'application/json' } })
+                    .then(res => res.json())
+                    .then(json => {
+                        if (json.success) {
+                            location.replace('/dashboard');
+                        }
+                        else {
+                            location.replace('/');
+                        }
+                    })
+                return;
+            }
+        );
+    }
     onMount(() => {
         connected = socket.connected;
         authURL = `https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${$page.url.origin}&response_type=code&scope=identify%20guilds&prompt=none`;
@@ -25,33 +45,14 @@
                 // since there's a token cookie, we'll forward user to /dashboard
                 if (data.token) location.replace('/dashboard');
                 // since there's a way to authenticate, we'll reload
-                if (code) location.reload();
+                if (code) exchange();
                 // there's nothing else so let's just indicate we connected
                 connected = true;
             });
         }
         if (connected) {
             if (data.token) location.replace('/dashboard');
-            if (code) {
-                socket.emit(
-                    'exchange',
-                    [code, location.origin],
-                    (response: { status: string; encryptedToken: string }) => {
-                        if (response.status !== 'success') location.replace('/');
-                        fetch('/authenticate', { method: 'POST', body: JSON.stringify({ token: response.encryptedToken }), headers: { 'content-type': 'application/json' } })
-                            .then(res => res.json())
-                            .then(json => {
-                                if (json.success) {
-                                    location.replace('/dashboard');
-                                }
-                                else {
-                                    location.replace('/');
-                                }
-                            })
-                        return;
-                    }
-                );
-            }
+            if (code) exchange();
         }
     });
 </script>
