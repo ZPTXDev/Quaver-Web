@@ -18,7 +18,7 @@
     $: connected = false;
     $manualLoading = false;
     function exchange() {
-        socket.emit(
+        $socket.emit(
             'exchange',
             [code, location.origin],
             (response: { status: string; encryptedToken: string }) => {
@@ -38,10 +38,10 @@
         );
     }
     onMount(() => {
-        connected = socket.connected;
+        connected = $socket.connected;
         authURL = `https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${$page.url.origin}&response_type=code&scope=identify%20guilds&prompt=none`;
-        if (!socket.connected) {
-            socket.once('connect', () => {
+        if (!$socket.connected) {
+            $socket.once('connect', () => {
                 // since there's a token cookie, we'll forward user to /dashboard
                 if (data.token) location.replace('/dashboard');
                 // since there's a way to authenticate, we'll reload

@@ -112,7 +112,7 @@
 			event.target.checked = false;
 			return;
 		}
-		socket.emit('update', [guild.id, { type: `${id === 'stay' ? 'stay' : id === 'autolyrics' ? 'autoLyrics' : id === 'smartqueue' ? 'smartQueue' : ''}Feature`, value: enabled }], (r: { status: string }) => {
+		$socket.emit('update', [guild.id, { type: `${id === 'stay' ? 'stay' : id === 'autolyrics' ? 'autoLyrics' : id === 'smartqueue' ? 'smartQueue' : ''}Feature`, value: enabled }], (r: { status: string }) => {
 			if (r.status !== 'success' && event.target instanceof HTMLInputElement) {
 				event.target.checked = !enabled;
 				switch (id) {
@@ -143,7 +143,7 @@
 		page = 1;
 	}
 	function update(type: string, value?: any) {
-		socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
+		$socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
 			if (r.status !== 'success') {
 				toasts.error('You need to be in Quaver\'s voice channel.');
 				return;
@@ -161,153 +161,151 @@
 	}
 
 	onMount(() => {
-		socket.once('connect', () => {
-			socket.emit(
-				'fetchuser',
-				[data.token],
-				(response: { status: string; user: APIUser & { manager: boolean }; version: string }) => {
-					if (response.status !== 'success') {
-						location.replace(`/signout?redirect=${data.guildId}`);
-						return;
-					}
-					socket.emit(
-						'fetchguilds',
-						[data.token],
-						(rsp: {
-							status: string;
-							guilds: { message?: string } & (APIGuild & {
-								botInGuild?: boolean;
-								idle?: boolean;
-								track?: string;
-								premium?: boolean;
-							})[];
-							version: string;
-						}) => {
-							if (rsp.status !== 'success') {
-								location.replace(`/signout?redirect=${data.guildId}`);
+		$socket.emit(
+			'fetchuser',
+			[data.token],
+			(response: { status: string; user: APIUser & { manager: boolean }; version: string }) => {
+				if (response.status !== 'success') {
+					location.replace(`/signout?redirect=${data.guildId}`);
+					return;
+				}
+				$socket.emit(
+					'fetchguilds',
+					[data.token],
+					(rsp: {
+						status: string;
+						guilds: { message?: string } & (APIGuild & {
+							botInGuild?: boolean;
+							idle?: boolean;
+							track?: string;
+							premium?: boolean;
+						})[];
+						version: string;
+					}) => {
+						if (rsp.status !== 'success') {
+							location.replace(`/signout?redirect=${data.guildId}`);
+							return;
+						}
+						const guilds = rsp.guilds ?? [];
+						const tempGuild = guilds.find((g) => g.id === data.guildId);
+						if (!tempGuild) {
+							location.replace('/dashboard');
+							return;
+						}
+						guild = tempGuild;
+						if (!guild.botInGuild) {
+							if ((Number(guild.permissions) & 0x20) !== 0) {
+								location.replace(
+									`https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${location.origin}&response_type=code&scope=applications.commands%20bot&permissions=3459072&guild_id=${data.guildId}`
+								);
 								return;
 							}
-							const guilds = rsp.guilds ?? [];
-							const tempGuild = guilds.find((g) => g.id === data.guildId);
-							if (!tempGuild) {
+							location.replace('/dashboard')
+							return;
+						}
+						$socket.emit('join', [guild.id], (joinCallback: { status: string }) => {
+							if (joinCallback.status !== 'success') {
 								location.replace('/dashboard');
 								return;
 							}
-							guild = tempGuild;
-							if (!guild.botInGuild) {
-								if ((Number(guild.permissions) & 0x20) !== 0) {
-									location.replace(
-										`https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${location.origin}&response_type=code&scope=applications.commands%20bot&permissions=3459072&guild_id=${data.guildId}`
-									);
-									return;
-								}
-								location.replace('/dashboard')
-								return;
-							}
-							socket.emit('join', [guild.id], (joinCallback: { status: string }) => {
-								if (joinCallback.status !== 'success') {
-									location.replace('/dashboard');
-									return;
-								}
-								socket.emit(
-									'request',
-									[guild.id, 'player'],
-									(requestCallback: { status: string; response?: any }) => {
+							$socket.emit(
+								'request',
+								[guild.id, 'player'],
+								(requestCallback: { status: string; response?: any }) => {
+									if (requestCallback.status !== 'success') {
+										location.replace('/dashboard');
+										return;
+									}
+									if (requestCallback.response) {
+										player = requestCallback.response;
+										identifier = !player.playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && player.playing.track.identifier ? player.playing.track.identifier : '';
+										player.connected = true;
+										position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
+										volume = player.volume;
+										queue = player.queue;
+									}
+									$socket.on('intervalTrackUpdate', playing => {
+										player.playing = playing;
+										identifier = !playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && playing.track.identifier ? playing.track.identifier : '';
+										player.connected = true;
+										if (updatePosition) position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
+										if (updateVolume) volume = player.volume;
+									});
+									$socket.on('queueUpdate', q => {
+										player.queue = q;
+										queue = player.queue;
+									});
+									$socket.on('filterUpdate', filters => {
+										player.filters = filters;
+									});
+									$socket.on('loopUpdate', loop => {
+										player.loop = loop;
+									});
+									$socket.on('pauseUpdate', paused => {
+										player.paused = paused;
+									});
+									$socket.on('volumeUpdate', vol => {
+										player.volume = vol;
+										if (updateVolume) volume = player.volume;
+									});
+									$socket.on('channelUpdate', channel => {
+										player.channel = channel;
+									});
+									$socket.on('textChannelUpdate', textChannel => {
+										player.textChannel = textChannel;
+									});
+									$socket.on('timeoutUpdate', timeout => {
+										if (player.timeout && !timeout) toasts.info('Resuming your session.');
+										player.timeout = timeout;
+									});
+									$socket.on('pauseTimeoutUpdate', pauseTimeout => {
+										if (player.pauseTimeout && !pauseTimeout) toasts.info('Resuming your session.');
+										player.pauseTimeout = pauseTimeout;
+									});
+									$socket.on('playerDisconnect', () => {
+										player.queue = [];
+										player.volume = 100;
+										player.loop = 0;
+										player.filters = { bassboost: false, nightcore: false };
+										player.paused = false;
+										player.playing = { track: {}, elapsed: 0, duration: 0, skip: {}, nothingPlaying: true };
+										player.timeout = false;
+										player.pauseTimeout = false;
+										player.connected = false;
+										player.channel = undefined;
+										player.textChannel = undefined;
+										identifier = '';
+										position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
+										volume = player.volume;
+									});
+									$socket.on('stayFeatureUpdate', state => {
+										settings.stay.enabled = state.enabled;
+									});
+									$socket.on('autoLyricsFeatureUpdate', state => {
+										settings.autolyrics.enabled = state.enabled;
+									});
+									$socket.on('smartQueueFeatureUpdate', state => {
+										settings.smartqueue.enabled = state.enabled;
+									});
+									user = response.user;
+									version = rsp.version;
+									$socket.emit('request', [guild.id, 'settings'], (requestCallback: { status: string; response?: any }) => {
 										if (requestCallback.status !== 'success') {
 											location.replace('/dashboard');
 											return;
 										}
 										if (requestCallback.response) {
-											player = requestCallback.response;
-											identifier = !player.playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && player.playing.track.identifier ? player.playing.track.identifier : '';
-											player.connected = true;
-											position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-											volume = player.volume;
-											queue = player.queue;
+											settings = requestCallback.response;
 										}
-										socket.on('intervalTrackUpdate', playing => {
-											player.playing = playing;
-											identifier = !playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && playing.track.identifier ? playing.track.identifier : '';
-											player.connected = true;
-											if (updatePosition) position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-											if (updateVolume) volume = player.volume;
-										});
-										socket.on('queueUpdate', q => {
-											player.queue = q;
-											queue = player.queue;
-										});
-										socket.on('filterUpdate', filters => {
-											player.filters = filters;
-										});
-										socket.on('loopUpdate', loop => {
-											player.loop = loop;
-										});
-										socket.on('pauseUpdate', paused => {
-											player.paused = paused;
-										});
-										socket.on('volumeUpdate', vol => {
-											player.volume = vol;
-											if (updateVolume) volume = player.volume;
-										});
-										socket.on('channelUpdate', channel => {
-											player.channel = channel;
-										});
-										socket.on('textChannelUpdate', textChannel => {
-											player.textChannel = textChannel;
-										});
-										socket.on('timeoutUpdate', timeout => {
-											if (player.timeout && !timeout) toasts.info('Resuming your session.');
-											player.timeout = timeout;
-										});
-										socket.on('pauseTimeoutUpdate', pauseTimeout => {
-											if (player.pauseTimeout && !pauseTimeout) toasts.info('Resuming your session.');
-											player.pauseTimeout = pauseTimeout;
-										});
-										socket.on('playerDisconnect', () => {
-											player.queue = [];
-											player.volume = 100;
-											player.loop = 0;
-											player.filters = { bassboost: false, nightcore: false };
-											player.paused = false;
-											player.playing = { track: {}, elapsed: 0, duration: 0, skip: {}, nothingPlaying: true };
-											player.timeout = false;
-											player.pauseTimeout = false;
-											player.connected = false;
-											player.channel = undefined;
-											player.textChannel = undefined;
-											identifier = '';
-											position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-											volume = player.volume;
-										});
-										socket.on('stayFeatureUpdate', state => {
-											settings.stay.enabled = state.enabled;
-										});
-										socket.on('autoLyricsFeatureUpdate', state => {
-											settings.autolyrics.enabled = state.enabled;
-										});
-										socket.on('smartQueueFeatureUpdate', state => {
-											settings.smartqueue.enabled = state.enabled;
-										});
-										user = response.user;
-										version = rsp.version;
-										socket.emit('request', [guild.id, 'settings'], (requestCallback: { status: string; response?: any }) => {
-											if (requestCallback.status !== 'success') {
-												location.replace('/dashboard');
-												return;
-											}
-											if (requestCallback.response) {
-												settings = requestCallback.response;
-											}
-											$manualLoading = false;
-										});
-									}
-								);
-							});
-						}
-					);
-				}
-			);
-		});
+										$manualLoading = false;
+									});
+								}
+							);
+						});
+					}
+				);
+			}
+		);
 	});
 </script>
 

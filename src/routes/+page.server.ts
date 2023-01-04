@@ -1,4 +1,3 @@
-import { socket } from '$lib/socket';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
