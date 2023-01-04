@@ -145,6 +145,10 @@
 	}
 	function update(type: string, value?: any) {
 		$socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
+			if (r.status !== 'error-auth') {
+				toasts.error('You do not have permission to perform that action.');
+				return;
+			}
 			if (r.status !== 'success') {
 				toasts.error('You need to be in Quaver\'s voice channel.');
 				return;
@@ -445,7 +449,7 @@
 			{/if}
 			<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Settings</Heading>
 			{#each Object.keys(settings) as key, i}
-				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}cursor-pointer`} checked={settings[key].enabled} id={key} on:change={settingsToggled}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''}</Toggle>
+				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}cursor-pointer`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (guild?.permissions ?? 0 & 0x20) === 0}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''}</Toggle>
 			{/each}
 		</Card>
 	</div>
