@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import { page } from '$app/stores';
+    import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import discord from '$lib/images/discord.svg';
 	import logo from '$lib/images/logo.svg';
@@ -22,15 +23,15 @@
             'exchange',
             [code, location.origin],
             (response: { status: string; encryptedToken: string }) => {
-                if (response.status !== 'success') location.replace('/');
+                if (response.status !== 'success') goto('/');
                 fetch('/authenticate', { method: 'POST', body: JSON.stringify({ token: response.encryptedToken }), headers: { 'content-type': 'application/json' } })
                     .then(res => res.json())
                     .then(json => {
                         if (json.success) {
-                            location.replace('/dashboard');
+                            goto('/dashboard');
                         }
                         else {
-                            location.replace('/');
+                            goto('/');
                         }
                     })
                 return;
@@ -43,7 +44,7 @@
         if (!$socket.connected) {
             $socket.once('connect', () => {
                 // since there's a token cookie, we'll forward user to /dashboard
-                if (data.token) location.replace('/dashboard');
+                if (data.token) goto('/dashboard');
                 // since there's a way to authenticate, we'll reload
                 if (code) exchange();
                 // there's nothing else so let's just indicate we connected
@@ -51,7 +52,7 @@
             });
         }
         if (connected) {
-            if (data.token) location.replace('/dashboard');
+            if (data.token) goto('/dashboard');
             if (code) exchange();
         }
     });

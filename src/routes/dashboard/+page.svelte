@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
+	import { goto } from '$app/navigation';
 	import logo from '$lib/images/logo-square.svg';
 	import { manualLoading } from '$lib/loading';
 	import { socket } from '$lib/socket';
@@ -66,7 +67,7 @@
 
 	onMount(() => {
 		if (!$socket.connected) {
-			location.replace('/');
+			goto('/');
 			return;
 		}
 		$socket.emit(
@@ -74,7 +75,7 @@
 			[data.token],
 			(response: { status: string; user: APIUser; version: string }) => {
 				if (response.status !== 'success') {
-					location.replace('/signout');
+					goto('/signout');
 					return;
 				}
 				$socket.emit(
@@ -91,7 +92,7 @@
 						version: string;
 					}) => {
 						if (rsp.status !== 'success') {
-							location.replace('/signout');
+							goto('/signout');
 							return;
 						}
 						const webGuilds = rsp.guilds ?? [];

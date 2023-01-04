@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
+	import { goto } from '$app/navigation';
 	import { manualLoading } from '$lib/loading';
 	import { managerMode } from '$lib/managerMode';
 	import { socket } from '$lib/socket';
@@ -166,7 +167,7 @@
 			[data.token],
 			(response: { status: string; user: APIUser & { manager: boolean }; version: string }) => {
 				if (response.status !== 'success') {
-					location.replace(`/signout?redirect=${data.guildId}`);
+					goto(`/signout?redirect=${data.guildId}`);
 					return;
 				}
 				$socket.emit(
@@ -183,29 +184,29 @@
 						version: string;
 					}) => {
 						if (rsp.status !== 'success') {
-							location.replace(`/signout?redirect=${data.guildId}`);
+							goto(`/signout?redirect=${data.guildId}`);
 							return;
 						}
 						const guilds = rsp.guilds ?? [];
 						const tempGuild = guilds.find((g) => g.id === data.guildId);
 						if (!tempGuild) {
-							location.replace('/dashboard');
+							goto('/dashboard');
 							return;
 						}
 						guild = tempGuild;
 						if (!guild.botInGuild) {
 							if ((Number(guild.permissions) & 0x20) !== 0) {
-								location.replace(
+								goto(
 									`https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${location.origin}&response_type=code&scope=applications.commands%20bot&permissions=3459072&guild_id=${data.guildId}`
 								);
 								return;
 							}
-							location.replace('/dashboard')
+							goto('/dashboard')
 							return;
 						}
 						$socket.emit('join', [guild.id], (joinCallback: { status: string }) => {
 							if (joinCallback.status !== 'success') {
-								location.replace('/dashboard');
+								goto('/dashboard');
 								return;
 							}
 							$socket.emit(
@@ -213,7 +214,7 @@
 								[guild.id, 'player'],
 								(requestCallback: { status: string; response?: any }) => {
 									if (requestCallback.status !== 'success') {
-										location.replace('/dashboard');
+										goto('/dashboard');
 										return;
 									}
 									if (requestCallback.response) {
@@ -291,7 +292,7 @@
 									version = rsp.version;
 									$socket.emit('request', [guild.id, 'settings'], (requestCallback: { status: string; response?: any }) => {
 										if (requestCallback.status !== 'success') {
-											location.replace('/dashboard');
+											goto('/dashboard');
 											return;
 										}
 										if (requestCallback.response) {
