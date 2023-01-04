@@ -145,22 +145,22 @@
 	}
 	function update(type: string, value?: any) {
 		$socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
-			switch (r.status) {
-				case 'error-auth':
-					toasts.error('You do not have permission to perform that action.');
-					return;
-				case 'success':
-					toasts.error('You need to be in Quaver\'s voice channel.');
-					return;
+			if (r.status === 'error-auth') {
+				toasts.error('You do not have permission to perform that action.');
+				return;
+			}
+			if (r.status !== 'success') {
+				toasts.error('You need to be in Quaver\'s voice channel.');
+				return;
 			}
 			switch (type) {
 				case 'bassboost':
 				case 'nightcore':
 					toasts.info('Filters may take a few seconds to apply.');
-					return;
+					break;
 				case 'remove':
 					toasts.success('Successfully removed track.');
-					return;
+					break;
 			}
 		});
 	}
