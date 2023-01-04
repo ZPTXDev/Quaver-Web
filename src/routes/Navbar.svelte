@@ -16,7 +16,7 @@
 </script>
 
 <Navbar>
-    <NavBrand href="/dashboard" on:click|preventDefault={() => goto('/dashboard')}>
+    <NavBrand href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}}>
         <img
             src={logo}
             class="mr-3 h-6 sm:h-9"

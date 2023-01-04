@@ -181,7 +181,7 @@
 					{/if}
 				</p>
 				<br>
-				<Button gradient={!guild.idle} color={guild.idle ? 'blue' : 'purpleToBlue'} class="md:absolute md:bottom-0 md:mb-6" href={!guild.botInGuild && (guild.permissions & 0x20) === 0 ? '' : `/guild/${guild.id}`} on:click|preventDefault={() => !guild.botInGuild && (guild.permissions & 0x20) === 0 && goto(`/guild/${guild.id}`)} disabled={!guild.botInGuild && (guild.permissions & 0x20) === 0}>
+				<Button gradient={!guild.idle} color={guild.idle ? 'blue' : 'purpleToBlue'} class="md:absolute md:bottom-0 md:mb-6" href={!guild.botInGuild && (guild.permissions & 0x20) === 0 ? '' : `/guild/${guild.id}`} on:click={event => {event.preventDefault(); if (!guild.botInGuild && (guild.permissions & 0x20) === 0) goto(`/guild/${guild.id}`);}} disabled={!guild.botInGuild && (guild.permissions & 0x20) === 0}>
 					{#if guild.botInGuild}
 						Manage Server
 						<ArrowRight class="w-5 h-5 ml-2"></ArrowRight>

@@ -343,7 +343,7 @@
 <Navbar {user} />
 <div class="container mx-auto my-4">
 	<Breadcrumb>
-		<BreadcrumbItem href="/dashboard" on:click|preventDefault={() => goto('/dashboard')} home>Home</BreadcrumbItem>
+		<BreadcrumbItem href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}} home>Home</BreadcrumbItem>
 		<BreadcrumbItem>{guild.name}</BreadcrumbItem>
 	</Breadcrumb>
 </div>
