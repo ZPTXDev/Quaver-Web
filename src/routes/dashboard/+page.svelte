@@ -65,56 +65,54 @@
 	}
 
 	onMount(() => {
-		if (!socket.connected) {
-			location.replace('/');
-			return;
-		}
-		socket.emit(
-			'fetchuser',
-			[data.token],
-			(response: { status: string; user: APIUser; version: string }) => {
-				if (response.status !== 'success') {
-					location.replace('/signout');
-					return;
-				}
-				socket.emit(
-					'fetchguilds',
-					[data.token],
-					(rsp: {
-						status: string;
-						guilds: { message?: string } & (APIGuild & {
-							botInGuild?: boolean;
-							idle?: boolean;
-							track?: string;
-							premium?: boolean;
-						})[];
-						version: string;
-					}) => {
-						if (rsp.status !== 'success') {
-							location.replace('/signout');
-							return;
-						}
-						const webGuilds = rsp.guilds ?? [];
-						webGuilds.sort((a, b) => {
-							if (a.botInGuild && !a.idle && b.botInGuild && b.idle) return -1;
-							if (b.botInGuild && !b.idle && a.botInGuild && a.idle) return 1;
-							if (a.botInGuild && !b.botInGuild) return -1;
-							if (b.botInGuild && !a.botInGuild) return 1;
-							if (!a.permissions || !b.permissions) return 0;
-							if ((Number(a.permissions) & 0x20) !== 0 && (Number(b.permissions) & 0x20) === 0)
-								return -1;
-							if ((Number(b.permissions) & 0x20) !== 0 && (Number(a.permissions) & 0x20) === 0)
-								return 1;
-							return a.name.localeCompare(b.name);
-						});
-						user = response.user;
-						guilds = webGuilds;
-						version = rsp.version;
-						$manualLoading = false;
+		socket.once('connect', () => {
+			socket.emit(
+				'fetchuser',
+				[data.token],
+				(response: { status: string; user: APIUser; version: string }) => {
+					if (response.status !== 'success') {
+						location.replace('/signout');
+						return;
 					}
-				);
-			}
-		);
+					socket.emit(
+						'fetchguilds',
+						[data.token],
+						(rsp: {
+							status: string;
+							guilds: { message?: string } & (APIGuild & {
+								botInGuild?: boolean;
+								idle?: boolean;
+								track?: string;
+								premium?: boolean;
+							})[];
+							version: string;
+						}) => {
+							if (rsp.status !== 'success') {
+								location.replace('/signout');
+								return;
+							}
+							const webGuilds = rsp.guilds ?? [];
+							webGuilds.sort((a, b) => {
+								if (a.botInGuild && !a.idle && b.botInGuild && b.idle) return -1;
+								if (b.botInGuild && !b.idle && a.botInGuild && a.idle) return 1;
+								if (a.botInGuild && !b.botInGuild) return -1;
+								if (b.botInGuild && !a.botInGuild) return 1;
+								if (!a.permissions || !b.permissions) return 0;
+								if ((Number(a.permissions) & 0x20) !== 0 && (Number(b.permissions) & 0x20) === 0)
+									return -1;
+								if ((Number(b.permissions) & 0x20) !== 0 && (Number(a.permissions) & 0x20) === 0)
+									return 1;
+								return a.name.localeCompare(b.name);
+							});
+							user = response.user;
+							guilds = webGuilds;
+							version = rsp.version;
+							$manualLoading = false;
+						}
+					);
+				}
+			);
+		});
 	});
 </script>
 
