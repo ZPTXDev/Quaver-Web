@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { beforeNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
 	import { manualLoading } from '$lib/loading';
 	import { Spinner } from 'flowbite-svelte';
@@ -21,6 +22,7 @@
 		'The website has gone through at least 3 redesigns.',
 	];
 	if ($page.url.pathname !== '/') $manualLoading = true;
+	beforeNavigate(() => $manualLoading = true);
 	toasts.clearAll();
 </script>
 
