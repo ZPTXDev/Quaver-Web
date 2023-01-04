@@ -385,7 +385,7 @@
 									Live
 								</Badge>
 							{/if}
-							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.duration / 1000} value={position} disabled={(player.playing.track?.requester !== user.id && (guild?.permissions ?? 0 & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />					
+							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.duration / 1000} value={position} disabled={(player.playing.track?.requester !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />					
 							{#if !player.playing.track?.isStream || player.playing.nothingPlaying}
 								{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : player.playing.duration), true)}
 							{/if}
@@ -449,7 +449,7 @@
 			{/if}
 			<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Settings</Heading>
 			{#each Object.keys(settings) as key, i}
-				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${['autolyrics', 'smartqueue'].includes(key) && (guild?.permissions ?? 0 & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (guild?.permissions ?? 0 & 0x20) === 0}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''} {(guild?.permissions ?? 0 & 0x20)}</Toggle>
+				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''}</Toggle>
 			{/each}
 		</Card>
 	</div>
@@ -518,7 +518,7 @@
 								</div>
 								<div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
 									<ButtonGroup>
-										{#if track.requester === user.id || (guild?.permissions ?? 0 & 0x20) !== 0 || $managerMode}
+										{#if track.requester === user.id || (Number(guild?.permissions ?? 0) & 0x20) !== 0 || $managerMode}
 											<Button color="red" on:click={() => update('remove', player.queue.indexOf(track))}>
 												<XMark class="w-5 h-5 mr-2"></XMark>
 												Remove{track.requester !== user.id ? ' forcefully' : ''}
