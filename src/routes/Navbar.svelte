@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import logo from '$lib/images/logo.svg';
     import { managerMode } from '$lib/managerMode';
     import type { APIUser } from 'discord-api-types/v10';
@@ -15,7 +16,7 @@
 </script>
 
 <Navbar>
-    <NavBrand href="/dashboard">
+    <NavBrand href="/dashboard" on:click|preventDefault={() => goto('/dashboard')}>
         <img
             src={logo}
             class="mr-3 h-6 sm:h-9"
