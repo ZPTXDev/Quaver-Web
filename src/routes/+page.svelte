@@ -28,7 +28,6 @@
                     .then(res => res.json())
                     .then(json => {
                         if (json.success) {
-                            $manualLoading = true;
                             goto('/dashboard');
                         }
                         else {

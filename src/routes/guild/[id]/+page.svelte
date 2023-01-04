@@ -19,7 +19,6 @@
 	import Navbar from '../../Navbar.svelte';
 	import type { PageData } from './$types';
 
-	$manualLoading = true;
 	export let data: PageData;
 	let queue = [] as any[];
 	$: player = {
@@ -191,7 +190,6 @@
 						const guilds = rsp.guilds ?? [];
 						const tempGuild = guilds.find((g) => g.id === data.guildId);
 						if (!tempGuild) {
-							$manualLoading = true;
 							goto('/dashboard');
 							return;
 						}
@@ -203,13 +201,11 @@
 								);
 								return;
 							}
-							$manualLoading = true;
 							goto('/dashboard')
 							return;
 						}
 						$socket.emit('join', [guild.id], (joinCallback: { status: string }) => {
 							if (joinCallback.status !== 'success') {
-								$manualLoading = true;
 								goto('/dashboard');
 								return;
 							}
@@ -218,7 +214,6 @@
 								[guild.id, 'player'],
 								(requestCallback: { status: string; response?: any }) => {
 									if (requestCallback.status !== 'success') {
-										$manualLoading = true;
 										goto('/dashboard');
 										return;
 									}
@@ -297,7 +292,6 @@
 									version = rsp.version;
 									$socket.emit('request', [guild.id, 'settings'], (requestCallback: { status: string; response?: any }) => {
 										if (requestCallback.status !== 'success') {
-											$manualLoading = true;
 											goto('/dashboard');
 											return;
 										}
