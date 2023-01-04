@@ -348,7 +348,7 @@
 <div class="container mx-auto my-4">
 	<Breadcrumb>
 		<BreadcrumbItem href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}} home>Home</BreadcrumbItem>
-		<BreadcrumbItem>{guild.name} {guild.permissions}</BreadcrumbItem>
+		<BreadcrumbItem>{guild.name}</BreadcrumbItem>
 	</Breadcrumb>
 </div>
 <div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4">
@@ -449,7 +449,7 @@
 			{/if}
 			<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Settings</Heading>
 			{#each Object.keys(settings) as key, i}
-				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${['autolyrics', 'smartqueue'].includes(key) && (guild?.permissions ?? 0 & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (guild?.permissions ?? 0 & 0x20) === 0}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''}</Toggle>
+				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${(key === 'autolyrics' || key === 'smartqueue') && (guild?.permissions ?? 0 & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={(key === 'autolyrics' || key === 'smartqueue') && (guild?.permissions ?? 0 & 0x20) === 0}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''}</Toggle>
 			{/each}
 		</Card>
 	</div>
