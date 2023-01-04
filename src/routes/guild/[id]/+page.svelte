@@ -3,8 +3,8 @@
 </svelte:head>
 
 <script lang="ts">
-	import { env } from '$env/dynamic/public';
 	import { goto } from '$app/navigation';
+	import { env } from '$env/dynamic/public';
 	import { manualLoading } from '$lib/loading';
 	import { managerMode } from '$lib/managerMode';
 	import { socket } from '$lib/socket';
@@ -145,22 +145,22 @@
 	}
 	function update(type: string, value?: any) {
 		$socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
-			if (r.status !== 'error-auth') {
-				toasts.error('You do not have permission to perform that action.');
-				return;
-			}
-			if (r.status !== 'success') {
-				toasts.error('You need to be in Quaver\'s voice channel.');
-				return;
+			switch (r.status) {
+				case 'error-auth':
+					toasts.error('You do not have permission to perform that action.');
+					return;
+				case 'success':
+					toasts.error('You need to be in Quaver\'s voice channel.');
+					return;
 			}
 			switch (type) {
 				case 'bassboost':
 				case 'nightcore':
 					toasts.info('Filters may take a few seconds to apply.');
-					break;
+					return;
 				case 'remove':
 					toasts.success('Successfully removed track.');
-					break;
+					return;
 			}
 		});
 	}
