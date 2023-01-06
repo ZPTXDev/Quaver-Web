@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
     import { Logo } from '$images';
     import { managerMode } from '$lib/stores';
     import { signout, type WebUser } from '$lib/util';
@@ -18,7 +19,7 @@
 </script>
 
 <Navbar>
-    <NavBrand href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}}>
+    <NavBrand href={$page.url.pathname === '/dashboard' ? '#' : '/dashboard'}>
         <img
             src={Logo}
             class="mr-3 h-6 sm:h-9"
