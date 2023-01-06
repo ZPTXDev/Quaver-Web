@@ -8,7 +8,10 @@
 	import '../app.postcss';
 	
 	if ($page.url.pathname !== '/') $manualLoading = true;
-	beforeNavigate(() => $manualLoading = true);
+	beforeNavigate(() => {
+		toasts.clearAll();
+		$manualLoading = true;
+	});
 	toasts.clearAll();
 </script>
 
