@@ -4,14 +4,14 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Footer, Navbar, PromoDrawer } from '$components';
+	import { Footer, Navbar, NotFound, PromoDrawer } from '$components';
 	import { env } from '$env/dynamic/public';
 	import { managerMode, manualLoading, socket } from '$lib/stores';
 	import { getInitials, signout, type WebGuild, type WebUser } from '$lib/util';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
+	import { ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
 	import { ToastContainer, toasts } from 'svelte-toasts';
 	import type { PageData } from './$types';
 
@@ -465,13 +465,7 @@
 			<Listgroup class="border-0 dark:!bg-transparent w-full">
 				{#if paginatedQueue.length === 0}
 					<div class="col-span-full text-center w-full p-8">
-						<MagnifyingGlass size=40 class="mx-auto mb-3"></MagnifyingGlass>
-						<h5 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-							No tracks found
-						</h5>
-						<p class="text-base text-gray-500 sm:text-lg dark:text-gray-400">
-							Try narrowing your search criteria.
-						</p>
+						<NotFound item="track" />
 					</div>
 				{:else}
 					{#each paginatedQueue[page - 1] as track, index}
