@@ -11,3 +11,19 @@ export const transitionParams = readable({
 	duration: 200,
 	easing: sineIn
 });
+
+export const loadingHeadline = readable([
+	'Loading...',
+	'Just a second...',
+	'Almost there...',
+	'Getting there...',
+	'Thinking really hard...',
+	'Working on it...'
+]);
+export const tips = readable([
+	'Quaver is open source! You can contribute to the project on GitHub.',
+	"Quaver's translations are entirely crowdsourced.",
+	'The source code for this website is available on GitHub!',
+	'Quaver was created on March 22nd, 2021.',
+	'The website has gone through at least 3 redesigns.'
+]);
