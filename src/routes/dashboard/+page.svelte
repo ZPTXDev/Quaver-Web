@@ -6,42 +6,33 @@
 	import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import logo from '$lib/images/logo-square.svg';
-	import { manualLoading, socket } from '$lib/stores';
-	import { signout } from '$lib/util';
+	import { manualLoading, socket, transitionParams } from '$lib/stores';
+	import { signout, type WebGuild, type WebUser } from '$lib/util';
 	import { paginate } from '@zptxdev/zptx-lib';
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Button, Card, CloseButton, Drawer, Pagination, Search, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import { ArrowLongRight, ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
-	import { sineIn } from 'svelte/easing';
 	import Footer from '../Footer.svelte';
 	import Navbar from '../Navbar.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
-	let guilds = [] as (APIGuild & {
-		botInGuild?: boolean;
-		idle?: boolean;
-		track?: string;
-		premium?: boolean;
-	})[];
-	$: user = {
+	let guilds: WebGuild[] = [];
+	let user: WebUser = {
 		id: '',
 		username: '',
 		discriminator: '',
 		avatar: '',
-	} as APIUser;
-	$: version = '';
-	$: paginatedGuilds = paginate(guilds, 9);
-	$: pages = paginatedGuilds.map((_, index) => index + 1).filter((pageNumber) => (page <= 2 ? pageNumber >= 1 && pageNumber <= 5 : (page >= paginatedGuilds.length - 2 ? pageNumber >= paginatedGuilds.length - 4 && pageNumber <= paginatedGuilds.length : pageNumber >= page - 2 && pageNumber <= page + 2))).map(name => ({ name, active: page === name }));
+	};
 	let page = 1;
 	let value = '';
 	let promoHidden = true;
-	let transitionParams = {
-		x: -320,
-		duration: 200,
-		easing: sineIn
-	};
+	
+	$: user;
+	$: version = '';
+	$: paginatedGuilds = paginate(guilds, 9);
+	$: pages = paginatedGuilds.map((_, index) => index + 1).filter((pageNumber) => (page <= 2 ? pageNumber >= 1 && pageNumber <= 5 : (page >= paginatedGuilds.length - 2 ? pageNumber >= paginatedGuilds.length - 4 && pageNumber <= paginatedGuilds.length : pageNumber >= page - 2 && pageNumber <= page + 2))).map(name => ({ name, active: page === name }));
 
 	const previous = () => {
 		if (page > 1) page -= 1;
@@ -84,12 +75,7 @@
 					[data.token],
 					async (rsp: {
 						status: string;
-						guilds: { message?: string } & (APIGuild & {
-							botInGuild?: boolean;
-							idle?: boolean;
-							track?: string;
-							premium?: boolean;
-						})[];
+						guilds: { message?: string } & WebGuild[];
 						version: string;
 					}) => {
 						if (rsp.status !== 'success') {
@@ -137,15 +123,15 @@
 	}
 </style>
 
-<Drawer transitionType="fly" {transitionParams} bind:hidden={promoHidden}>
-	<div class='flex items-center'>
+<Drawer transitionType="fly" {$transitionParams} bind:hidden={promoHidden}>
+	<div class="flex items-center">
 		<h5
 		  id="drawer-label"
 		  class="inline-flex items-center mb-4 text-base font-semibold text-amber-400">
 		  <MusicalNote class="w-5 h-5 mr-2" variation="solid"></MusicalNote>
 		  Quaver Premium
 		</h5>
-		<CloseButton on:click={() => (promoHidden = true)} class='mb-4 dark:text-white'/>
+		<CloseButton on:click={() => (promoHidden = true)} class="mb-4 dark:text-white"/>
 	</div>
 		<p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
 			Quaver Premium is a premium subscription that gives you access to exclusive features and benefits.

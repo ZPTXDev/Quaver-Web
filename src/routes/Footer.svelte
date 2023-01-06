@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
 	import { Footer, FooterLink, FooterLinkGroup } from 'flowbite-svelte';
+    
     export let version: string;
 </script>
 

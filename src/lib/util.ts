@@ -1,5 +1,18 @@
-import type { Snowflake } from 'discord-api-types/v10';
+import type { APIGuild, APIUser, Snowflake } from 'discord-api-types/v10';
 
+export type WebGuild = APIGuild & {
+	botInGuild?: boolean;
+	idle?: boolean;
+	track?: string;
+	premium?: boolean;
+};
+export type WebUser = APIUser & { manager?: boolean };
+
+export const getInitials = (name: string) =>
+	name
+		.split(' ')
+		.map((word: string) => word[0])
+		.join('');
 export const signout = async (guildId?: Snowflake) => {
 	const result = await fetch('/signout', {
 		method: 'POST',

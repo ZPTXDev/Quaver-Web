@@ -5,70 +5,62 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
-	import { managerMode, manualLoading, socket } from '$lib/stores';
-	import { signout } from '$lib/util';
+	import { managerMode, manualLoading, socket, transitionParams } from '$lib/stores';
+	import { getInitials, signout, type WebGuild, type WebUser } from '$lib/util';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
-	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, CloseButton, Drawer, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import { ArrowLongRight, ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, MusicalNote, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
 	import { ToastContainer, toasts } from 'svelte-toasts';
-	import { sineIn } from 'svelte/easing';
 	import Footer from '../../Footer.svelte';
 	import Navbar from '../../Navbar.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
-	let queue = [] as any[];
-	$: player = {
+	let player: any = {
 		playing: {
 			nothingPlaying: true,
 		},
 		loop: 0,
-	} as any;
-	$: user = {
+	};
+	let user: WebUser = {
 		id: '',
 		username: '',
 		discriminator: '',
 		avatar: '',
 		manager: false,
-	} as APIUser & { manager: boolean };
-	$: version = '';
-	$: guild = {} as APIGuild & {
-		botInGuild?: boolean;
-		idle?: boolean;
-		track?: string;
-		premium?: boolean;
 	};
-	$: settings = {} as any;
-	$: paginatedQueue = paginate(queue, perPage);
-	$: pages = paginatedQueue.map((_, index) => index + 1).filter((pageNumber) => (page <= 2 ? pageNumber >= 1 && pageNumber <= 5 : (page >= paginatedQueue.length - 2 ? pageNumber >= paginatedQueue.length - 4 && pageNumber <= paginatedQueue.length : pageNumber >= page - 2 && pageNumber <= page + 2))).map(name => ({ name, active: page === name }));
+	let guild: WebGuild = {} as WebGuild;
+	let settings: any = {};
+	let queue: any[] = [];
 	let page = 1;
 	let value = '';
 	let identifier = '';
 	let promoHidden = true;
-	let transitionParams = {
-		x: -320,
-		duration: 200,
-		easing: sineIn
-	};
 	let updatePosition = true;
-	$: position = 0;
 	let updateVolume = true;
-	$: volume = 100;
 	let perPage = 5;
+
+	$: player;
+	$: user;
+	$: version = '';
+	$: guild;
+	$: settings;
+	$: paginatedQueue = paginate(queue, perPage);
+	$: pages = paginatedQueue.map((_, index) => index + 1).filter((pageNumber) => (page <= 2 ? pageNumber >= 1 && pageNumber <= 5 : (page >= paginatedQueue.length - 2 ? pageNumber >= paginatedQueue.length - 4 && pageNumber <= paginatedQueue.length : pageNumber >= page - 2 && pageNumber <= page + 2))).map(name => ({ name, active: page === name }));
+	$: position = 0;
+	$: volume = 100;
 
 	const previous = () => {
 		if (page > 1) page -= 1;
-	}
+	};
 	const next = () => {
 		if (page < paginatedQueue.length) page += 1;
-	}
+	};
 	const click = (event: Event) => {
 		if (!event.target || !(event.target instanceof HTMLButtonElement)) return;
 		page = parseInt(event.target.innerText);
-	}
-
+	};
 	const search = (query: string) => {
 		let tempQueue = [];
 		if (query.length > 0) {
@@ -78,12 +70,12 @@
 		}
 		paginatedQueue = paginate(tempQueue, perPage);
 		page = 1;
-	}
+	};
 
 	function preload(src: string): Promise<string> {
 		if (src === '') return Promise.resolve('');
 		src = `https://img.youtube.com/vi/${src}/maxresdefault.jpg`;
-		return new Promise(function(resolve) {
+		return new Promise(resolve => {
 			let img = new Image();
 			img.onload = () => {
 				if (img.naturalWidth === 120) {
@@ -96,9 +88,6 @@
 			};
 			img.src = src;
 		});
-	}
-	function getInitials(name: string) {
-		return name.split(' ').map((word: string) => word[0]).join('');
 	}
 	function getQueueDuration(queue: any[]) {
 		return msToTimeString(msToTime(queue.filter(track => !track.isStream).map(track => track.length).reduce((acc, a) => acc + a, 0)), true);
@@ -168,7 +157,7 @@
 		$socket.emit(
 			'fetchuser',
 			[data.token],
-			async (response: { status: string; user: APIUser & { manager: boolean }; version: string }) => {
+			async (response: { status: string; user: WebUser; version: string }) => {
 				if (response.status !== 'success') {
 					await signout(data.guildId);
 					goto('/');
@@ -179,12 +168,7 @@
 					[data.token],
 					async (rsp: {
 						status: string;
-						guilds: { message?: string } & (APIGuild & {
-							botInGuild?: boolean;
-							idle?: boolean;
-							track?: string;
-							premium?: boolean;
-						})[];
+						guilds: { message?: string } & WebGuild[];
 						version: string;
 					}) => {
 						if (rsp.status !== 'success') {
@@ -329,7 +313,7 @@
 		{data.description}
 	</Toast>
 </ToastContainer>
-<Drawer transitionType="fly" {transitionParams} bind:hidden={promoHidden}>
+<Drawer transitionType="fly" {$transitionParams} bind:hidden={promoHidden}>
 	<div class='flex items-center'>
 		<h5
 		  id="drawer-label"

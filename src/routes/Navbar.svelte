@@ -2,10 +2,11 @@
     import { goto } from '$app/navigation';
     import logo from '$lib/images/logo.svg';
     import { managerMode } from '$lib/stores';
-    import { signout } from '$lib/util';
-    import type { APIUser } from 'discord-api-types/v10';
+    import { signout, type WebUser } from '$lib/util';
     import { Avatar, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand, Toggle } from 'flowbite-svelte';
-    export let user: APIUser & { manager?: boolean };
+    
+    export let user: WebUser;
+    
     function preload(src: string): Promise<string> {
         if (src === '') return Promise.resolve('');
         return new Promise(function (resolve) {

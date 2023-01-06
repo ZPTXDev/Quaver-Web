@@ -12,11 +12,15 @@
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
-    let code = $page.url.searchParams.get('code');
+
     export let data: PageData;
+    let code = $page.url.searchParams.get('code');
     let authURL = '';
+
     $: connected = false;
+
     $manualLoading = false;
+    
     function exchange() {
         $socket.emit(
             'exchange',

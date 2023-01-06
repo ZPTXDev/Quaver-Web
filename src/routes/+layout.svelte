@@ -6,6 +6,7 @@
 	import { toasts } from 'svelte-toasts';
 	import { fade } from 'svelte/transition';
 	import '../app.postcss';
+
 	let loading = [
 		'Loading...',
 		'Just a second...',
@@ -21,6 +22,7 @@
 		'Quaver was created on March 22nd, 2021.',
 		'The website has gone through at least 3 redesigns.',
 	];
+	
 	if ($page.url.pathname !== '/') $manualLoading = true;
 	beforeNavigate(() => $manualLoading = true);
 	toasts.clearAll();
