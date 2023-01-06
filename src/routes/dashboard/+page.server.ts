@@ -1,5 +1,3 @@
-import { socket } from '$lib/socket';
-import { tempToken } from '$lib/loading';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
