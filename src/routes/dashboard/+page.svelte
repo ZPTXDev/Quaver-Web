@@ -4,17 +4,17 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { env } from '$env/dynamic/public';
 	import logo from '$lib/images/logo-square.svg';
-	import { manualLoading, socket, transitionParams } from '$lib/stores';
+	import { manualLoading, socket } from '$lib/stores';
 	import { signout, type WebGuild, type WebUser } from '$lib/util';
 	import { paginate } from '@zptxdev/zptx-lib';
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
-	import { Button, Card, CloseButton, Drawer, Pagination, Search, Tooltip } from 'flowbite-svelte';
+	import { Button, Card, Pagination, Search, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowLongRight, ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
+	import { ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
 	import Footer from '../Footer.svelte';
 	import Navbar from '../Navbar.svelte';
+	import PremiumDrawer from '../PremiumDrawer.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -123,22 +123,7 @@
 	}
 </style>
 
-<Drawer transitionType="fly" {$transitionParams} bind:hidden={promoHidden}>
-	<div class="flex items-center">
-		<h5
-		  id="drawer-label"
-		  class="inline-flex items-center mb-4 text-base font-semibold text-amber-400">
-		  <MusicalNote class="w-5 h-5 mr-2" variation="solid"></MusicalNote>
-		  Quaver Premium
-		</h5>
-		<CloseButton on:click={() => (promoHidden = true)} class="mb-4 dark:text-white"/>
-	</div>
-		<p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
-			Quaver Premium is a premium subscription that gives you access to exclusive features and benefits.
-			Unlock features such as <strong>Smart Queue</strong>, <strong>Auto Lyrics</strong>, <strong>24/7 Mode</strong> and more!
-		</p>
-		<Button gradient color="purpleToPink" href={env.PUBLIC_PREMIUM_URL} class="w-full">Get Premium <ArrowLongRight class="w-4 h-4 ml-1"></ArrowLongRight></Button>
-</Drawer>
+<PremiumDrawer bind:hidden={promoHidden} />
 <Navbar {user} />
 <div class="container mx-auto my-4">
 	<Search size="md" bind:value on:input={e => search(value)}></Search>
