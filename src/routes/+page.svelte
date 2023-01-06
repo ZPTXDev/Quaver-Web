@@ -47,7 +47,10 @@
         if (!$socket.connected) {
             $socket.once('connect', () => {
                 // since there's a token cookie, we'll forward user to /dashboard
-                if (data.token) goto('/dashboard');
+                if (data.token) {
+                    goto('/dashboard');
+                    return;
+                }
                 if (code) exchange();
                 connected = true;
             });
