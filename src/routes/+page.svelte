@@ -35,11 +35,9 @@
                 const json = await result.json();
                 if (json.success) {
                     goto('/dashboard');
+                    return;
                 }
-                else {
-                    goto('/');
-                }
-                return;
+                goto('/');
             }
         );
     }
