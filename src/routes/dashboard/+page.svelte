@@ -4,7 +4,7 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Footer, Navbar, NotFound, PromoDrawer } from '$components';
+	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
 	import { LogoSquare } from '$images';
 	import { manualLoading, socket } from '$lib/stores';
 	import { signout, type WebGuild, type WebUser } from '$lib/util';
@@ -12,7 +12,7 @@
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Button, Card, Pagination, Search, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowRight, ChevronLeft, ChevronRight, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
+	import { ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -166,7 +166,7 @@
 	{:else}
 		<Card class="col-span-full text-center w-full" size="xl" padding="xl">
 			<div class="py-24">
-				<NotFound item="server" />
+				<PendingAction icon={MagnifyingGlass} title="No servers found" subtitle="Try narrowing your search criteria." />
 			</div>
 		</Card>
 	{/if}

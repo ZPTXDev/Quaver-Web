@@ -4,14 +4,14 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Footer, Navbar, NotFound, PromoDrawer } from '$components';
+	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
 	import { env } from '$env/dynamic/public';
 	import { managerMode, manualLoading, socket } from '$lib/stores';
 	import { getInitials, signout, type WebGuild, type WebUser } from '$lib/util';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
+	import { ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
 	import { ToastContainer, toasts } from 'svelte-toasts';
 	import type { PageData } from './$types';
 
@@ -445,13 +445,7 @@
 	<Card class="w-full lg:w-3/4 h-min{queue.length === 0 ? ' text-center items-center justify-center' : ''}" size="xl" padding="xl">
 		{#if queue.length === 0}
 			<div class="py-24">
-				<EllipsisHorizontalCircle size=40 class="mx-auto mb-3"></EllipsisHorizontalCircle>
-				<h5 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-					Queue is empty
-				</h5>
-				<p class="text-base text-gray-500 sm:text-lg dark:text-gray-400">
-					Add some songs to get started!
-				</p>
+				<PendingAction icon={EllipsisHorizontalCircle} title="Queue is empty" subtitle="Add some songs to get started!" />
 			</div>
 		{:else}
 			<div class="flex justify-between items-center mb-4">
@@ -465,7 +459,7 @@
 			<Listgroup class="border-0 dark:!bg-transparent w-full">
 				{#if paginatedQueue.length === 0}
 					<div class="col-span-full text-center w-full p-8">
-						<NotFound item="track" />
+						<PendingAction icon={MagnifyingGlass} title="No tracks found" subtitle="Try narrowing your search criteria." />
 					</div>
 				{:else}
 					{#each paginatedQueue[page - 1] as track, index}
