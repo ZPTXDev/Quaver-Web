@@ -462,7 +462,7 @@
 						<PendingAction icon={MagnifyingGlass} title="No tracks found" subtitle="Try narrowing your search criteria." />
 					</div>
 				{:else}
-					{#each paginatedQueue[page - 1] as track, index}
+					{#each paginatedQueue[page - 1] as track}
 						<ListgroupItem>
 							<div class="flex items-center space-x-4">
 								<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requester}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
