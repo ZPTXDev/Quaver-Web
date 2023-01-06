@@ -21,6 +21,14 @@
 
     $manualLoading = false;
     
+    function connectHandler() {
+        if (data.token) {
+            goto('/dashboard');
+            return false;
+        }
+        if (code) exchange();
+        return true;
+    }
     function exchange() {
         $socket.emit(
             'exchange',
@@ -42,23 +50,15 @@
         );
     }
     onMount(() => {
-        connected = $socket.connected;
         authURL = `https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${$page.url.origin}&response_type=code&scope=identify%20guilds&prompt=none`;
         if (!$socket.connected) {
             $socket.once('connect', () => {
                 // since there's a token cookie, we'll forward user to /dashboard
-                if (data.token) {
-                    goto('/dashboard');
-                    return;
-                }
-                if (code) exchange();
+                if (!connectHandler()) return;
                 connected = true;
             });
         }
-        if (connected) {
-            if (data.token) goto('/dashboard');
-            if (code) exchange();
-        }
+        if ($socket.connected) connectHandler();
     });
 </script>
 
