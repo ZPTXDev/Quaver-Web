@@ -5,7 +5,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Footer, Navbar, NotFound, PromoDrawer } from '$components';
-	import logo from '$lib/images/logo-square.svg';
+	import { LogoSquare } from '$images';
 	import { manualLoading, socket } from '$lib/stores';
 	import { signout, type WebGuild, type WebUser } from '$lib/util';
 	import { paginate } from '@zptxdev/zptx-lib';
@@ -129,7 +129,7 @@
 <div class="container mx-auto grid xl:grid-cols-3 lg:grid-cols-2 xs:grid-cols-1 gap-4 place-items-center">
 	{#if paginatedGuilds.length > 0}
 		{#each paginatedGuilds[page - 1] as guild}
-			<Card img={guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=1024` : logo} horizontal class="col-span-1 w-full h-full relative truncate-text enforce-logo-size{!guild.icon ? ' grayscale-logo' : ''}">
+			<Card img={guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=1024` : LogoSquare} horizontal class="col-span-1 w-full h-full relative truncate-text enforce-logo-size{!guild.icon ? ' grayscale-logo' : ''}">
 				<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white inline-flex items-center w-full">
 					<p class="truncate">{guild.name}</p>
 					{#if guild.premium}

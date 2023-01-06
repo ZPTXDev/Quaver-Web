@@ -9,7 +9,7 @@ const config = {
 	preprocess: [
 		vitePreprocess(),
 		preprocess({
-			postcss: true,
+			postcss: true
 		})
 	],
 
@@ -17,6 +17,7 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			'$components': './src/components',
+			'$images': './src/images'
 		}
 	},
 

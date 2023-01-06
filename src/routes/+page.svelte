@@ -6,8 +6,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { env } from '$env/dynamic/public';
-	import discord from '$lib/images/discord.svg';
-	import logo from '$lib/images/logo.svg';
+	import { DiscordLogo, Logo } from '$images';
 	import { manualLoading, socket } from '$lib/stores';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
@@ -69,7 +68,7 @@
     <Card class="w-full">
         <div class="text-xl text-center font-medium text-gray-900 dark:text-white p-0">
             <img
-                src={logo}
+                src={Logo}
                 class="inline-block mr-2 h-6 sm:h-9"
                 alt="Quaver Logo"
             />
@@ -78,7 +77,7 @@
         <br>
         <Button href={code || !connected ? '' : authURL} btnClass="text-center font-medium focus:ring-4 focus:outline-none inline-flex items-center justify-center px-5 py-2.5 text-sm text-white bg-[#5865F2] hover:bg-[#3b5998]/90 focus:ring-[#5865F2]/50 dark:focus:ring-[#5865F2]/55 rounded-lg{code || !connected ? ' cursor-not-allowed opacity-50' : ''}">
             {#if !code && connected}
-                <img src={discord} class="mr-2 -ml-1 w-4 h-4" alt="Discord Logo" />
+                <img src={DiscordLogo} class="mr-2 -ml-1 w-4 h-4" alt="Discord Logo" />
                 Sign in with Discord
             {:else}
                 <Spinner class="mr-2 -ml-1" size="4" color="white" />

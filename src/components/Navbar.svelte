@@ -1,6 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import logo from '$lib/images/logo.svg';
+    import { Logo } from '$images';
     import { managerMode } from '$lib/stores';
     import { signout, type WebUser } from '$lib/util';
     import { Avatar, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand, Toggle } from 'flowbite-svelte';
@@ -20,7 +20,7 @@
 <Navbar>
     <NavBrand href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}}>
         <img
-            src={logo}
+            src={Logo}
             class="mr-3 h-6 sm:h-9"
             alt="Quaver Logo"
         />
