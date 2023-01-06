@@ -18,6 +18,20 @@
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+	const featureMap: Record<string, Record<string, string>> = {
+		stay: {
+			id: 'stay',
+			name: '24/7 Mode',
+		},
+		autolyrics: {
+			id: 'autoLyrics',
+			name: 'Auto Lyrics',
+		},
+		smartqueue: {
+			id: 'smartQueue',
+			name: 'Smart Queue',
+		},
+	};
 	let player: any = {
 		playing: {
 			nothingPlaying: true,
@@ -102,7 +116,13 @@
 			event.target.checked = false;
 			return;
 		}
-		$socket.emit('update', [guild.id, { type: `${id === 'stay' ? 'stay' : id === 'autolyrics' ? 'autoLyrics' : id === 'smartqueue' ? 'smartQueue' : ''}Feature`, value: enabled }], (r: { status: string }) => {
+		$socket.emit('update', [
+			guild.id,
+			{
+				type: `${featureMap[id].id}Feature`,
+				value: enabled
+			}
+		], (r: { status: string }) => {
 			if (r.status !== 'success' && event.target instanceof HTMLInputElement) {
 				event.target.checked = !enabled;
 				switch (id) {
@@ -420,7 +440,7 @@
 			{/if}
 			<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Settings</Heading>
 			{#each Object.keys(settings) as key, i}
-				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0}>{key === 'stay' ? '24/7 Mode' : key === 'autolyrics' ? 'Auto Lyrics' : key === 'smartqueue' ? 'Smart Queue' : ''}</Toggle>
+				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0}>{featureMap[key].name}</Toggle>
 			{/each}
 		</Card>
 	</div>
