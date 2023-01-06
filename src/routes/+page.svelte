@@ -25,18 +25,20 @@
         $socket.emit(
             'exchange',
             [code, location.origin],
-            (response: { status: string; encryptedToken: string }) => {
+            async (response: { status: string; encryptedToken: string }) => {
                 if (response.status !== 'success') goto('/');
-                fetch('/authenticate', { method: 'POST', body: JSON.stringify({ token: response.encryptedToken }), headers: { 'content-type': 'application/json' } })
-                    .then(res => res.json())
-                    .then(json => {
-                        if (json.success) {
-                            goto('/dashboard');
-                        }
-                        else {
-                            goto('/');
-                        }
-                    })
+                const result = await fetch('/authenticate', {
+                    method: 'POST',
+                    body: JSON.stringify({ token: response.encryptedToken }),
+                    headers: { 'content-type': 'application/json' },
+                });
+                const json = await result.json();
+                if (json.success) {
+                    goto('/dashboard');
+                }
+                else {
+                    goto('/');
+                }
                 return;
             }
         );
