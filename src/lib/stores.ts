@@ -27,3 +27,17 @@ export const tips = readable([
 	'Quaver was created on March 22nd, 2021.',
 	'The website has gone through at least 3 redesigns.'
 ]);
+export const featureMap = readable({
+	stay: {
+		id: 'stay',
+		name: '24/7 Mode'
+	},
+	autolyrics: {
+		id: 'autoLyrics',
+		name: 'Auto Lyrics'
+	},
+	smartqueue: {
+		id: 'smartQueue',
+		name: 'Smart Queue'
+	}
+} as Record<string, Record<string, string>>);
