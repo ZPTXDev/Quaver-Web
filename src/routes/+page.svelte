@@ -60,7 +60,10 @@
                 connected = true;
             });
         }
-        if ($socket.connected) connectHandler();
+        if ($socket.connected) {
+            connected = true;
+            connectHandler();
+        }
     });
 </script>
 
