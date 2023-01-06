@@ -34,7 +34,10 @@
             'exchange',
             [code, location.origin],
             async (response: { status: string; encryptedToken: string }) => {
-                if (response.status !== 'success') goto('/');
+                if (response.status !== 'success') {
+                    goto('/');
+                    return;
+                }
                 const result = await fetch('/authenticate', {
                     method: 'POST',
                     body: JSON.stringify({ token: response.encryptedToken }),
