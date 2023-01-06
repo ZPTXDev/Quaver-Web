@@ -7,7 +7,7 @@
 	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
 	import { env } from '$env/dynamic/public';
 	import { featureMap, managerMode, manualLoading, socket } from '$lib/stores';
-	import { getInitials, signout, type WebGuild, type WebUser } from '$lib/util';
+	import { fetchGuilds, fetchUser, getInitials, join, request, signout, type WebGuild, type WebUser } from '$lib/util';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
@@ -158,149 +158,111 @@
 		});
 	}
 
-	onMount(() => {
-		$socket.emit(
-			'fetchuser',
-			[data.token],
-			async (response: { status: string; user: WebUser; version: string }) => {
-				if (response.status !== 'success') {
-					await signout(data.guildId);
-					goto('/');
+	onMount(async () => {
+		if (!$socket.connected) {
+			goto('/');
+			return;
+		}
+		try {
+			({ user, version } = await fetchUser($socket, data.token as string));
+			let { guilds } = await fetchGuilds($socket, data.token as string);
+			if (!guilds) guilds = [];
+			if (!guilds.some((g) => g.id === data.guildId)) {
+				goto('/dashboard');
+				return;
+			};
+			guild = guilds.find((g) => g.id === data.guildId) as WebGuild;
+			if (!guild.botInGuild) {
+				if ((Number(guild.permissions) & 0x20) !== 0) {
+					goto(
+						`https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${location.origin}&response_type=code&scope=applications.commands%20bot&permissions=3459072&guild_id=${data.guildId}`
+					);
 					return;
 				}
-				$socket.emit(
-					'fetchguilds',
-					[data.token],
-					async (rsp: {
-						status: string;
-						guilds: { message?: string } & WebGuild[];
-						version: string;
-					}) => {
-						if (rsp.status !== 'success') {
-							await signout(data.guildId);
-							goto(`/`);
-							return;
-						}
-						const guilds = rsp.guilds ?? [];
-						const tempGuild = guilds.find((g) => g.id === data.guildId);
-						if (!tempGuild) {
-							goto('/dashboard');
-							return;
-						}
-						guild = tempGuild;
-						if (!guild.botInGuild) {
-							if ((Number(guild.permissions) & 0x20) !== 0) {
-								goto(
-									`https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${location.origin}&response_type=code&scope=applications.commands%20bot&permissions=3459072&guild_id=${data.guildId}`
-								);
-								return;
-							}
-							goto('/dashboard')
-							return;
-						}
-						$socket.emit('join', [guild.id], (joinCallback: { status: string }) => {
-							if (joinCallback.status !== 'success') {
-								goto('/dashboard');
-								return;
-							}
-							$socket.emit(
-								'request',
-								[guild.id, 'player'],
-								(requestCallback: { status: string; response?: any }) => {
-									if (requestCallback.status !== 'success') {
-										goto('/dashboard');
-										return;
-									}
-									if (requestCallback.response) {
-										player = requestCallback.response;
-										identifier = !player.playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && player.playing.track.identifier ? player.playing.track.identifier : '';
-										player.connected = true;
-										position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-										volume = player.volume;
-										queue = player.queue;
-									}
-									$socket.on('intervalTrackUpdate', playing => {
-										player.playing = playing;
-										identifier = !playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && playing.track.identifier ? playing.track.identifier : '';
-										player.connected = true;
-										if (updatePosition) position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-										if (updateVolume) volume = player.volume;
-									});
-									$socket.on('queueUpdate', q => {
-										player.queue = q;
-										queue = player.queue;
-									});
-									$socket.on('filterUpdate', filters => {
-										player.filters = filters;
-									});
-									$socket.on('loopUpdate', loop => {
-										player.loop = loop;
-									});
-									$socket.on('pauseUpdate', paused => {
-										player.paused = paused;
-									});
-									$socket.on('volumeUpdate', vol => {
-										player.volume = vol;
-										if (updateVolume) volume = player.volume;
-									});
-									$socket.on('channelUpdate', channel => {
-										player.channel = channel;
-									});
-									$socket.on('textChannelUpdate', textChannel => {
-										player.textChannel = textChannel;
-									});
-									$socket.on('timeoutUpdate', timeout => {
-										if (player.timeout && !timeout) toasts.info('Resuming your session.');
-										player.timeout = timeout;
-									});
-									$socket.on('pauseTimeoutUpdate', pauseTimeout => {
-										if (player.pauseTimeout && !pauseTimeout) toasts.info('Resuming your session.');
-										player.pauseTimeout = pauseTimeout;
-									});
-									$socket.on('playerDisconnect', () => {
-										player.queue = [];
-										player.volume = 100;
-										player.loop = 0;
-										player.filters = { bassboost: false, nightcore: false };
-										player.paused = false;
-										player.playing = { track: {}, elapsed: 0, duration: 0, skip: {}, nothingPlaying: true };
-										player.timeout = false;
-										player.pauseTimeout = false;
-										player.connected = false;
-										player.channel = undefined;
-										player.textChannel = undefined;
-										identifier = '';
-										position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-										volume = player.volume;
-									});
-									$socket.on('stayFeatureUpdate', state => {
-										settings.stay.enabled = state.enabled;
-									});
-									$socket.on('autoLyricsFeatureUpdate', state => {
-										settings.autolyrics.enabled = state.enabled;
-									});
-									$socket.on('smartQueueFeatureUpdate', state => {
-										settings.smartqueue.enabled = state.enabled;
-									});
-									user = response.user;
-									version = rsp.version;
-									$socket.emit('request', [guild.id, 'settings'], (requestCallback: { status: string; response?: any }) => {
-										if (requestCallback.status !== 'success') {
-											goto('/dashboard');
-											return;
-										}
-										if (requestCallback.response) {
-											settings = requestCallback.response;
-										}
-										$manualLoading = false;
-									});
-								}
-							);
-						});
-					}
-				);
+				goto('/dashboard');
+				return;
 			}
-		);
+			await join($socket, guild.id);
+			const p = await request($socket, guild.id, 'player');
+			if (p.response) player = p.response;
+			identifier = !player.playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && player.playing.track.identifier ? player.playing.track.identifier : '';
+			player.connected = true;
+			position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
+			volume = player.volume;
+			queue = player.queue ?? [];
+			const s = await request($socket, guild.id, 'settings');
+			if (s.response) settings = s.response;
+			$manualLoading = false;
+		}
+		catch (error) {
+			await signout();
+			goto('/');
+		}
+		finally {
+			$socket.on('intervalTrackUpdate', playing => {
+				player.playing = playing;
+				identifier = !playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && playing.track.identifier ? playing.track.identifier : '';
+				player.connected = true;
+				if (updatePosition) position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
+				if (updateVolume) volume = player.volume;
+			});
+			$socket.on('queueUpdate', q => {
+				player.queue = q;
+				queue = player.queue;
+			});
+			$socket.on('filterUpdate', filters => {
+				player.filters = filters;
+			});
+			$socket.on('loopUpdate', loop => {
+				player.loop = loop;
+			});
+			$socket.on('pauseUpdate', paused => {
+				player.paused = paused;
+			});
+			$socket.on('volumeUpdate', vol => {
+				player.volume = vol;
+				if (updateVolume) volume = player.volume;
+			});
+			$socket.on('channelUpdate', channel => {
+				player.channel = channel;
+			});
+			$socket.on('textChannelUpdate', textChannel => {
+				player.textChannel = textChannel;
+			});
+			$socket.on('timeoutUpdate', timeout => {
+				if (player.timeout && !timeout) toasts.info('Resuming your session.');
+				player.timeout = timeout;
+			});
+			$socket.on('pauseTimeoutUpdate', pauseTimeout => {
+				if (player.pauseTimeout && !pauseTimeout) toasts.info('Resuming your session.');
+				player.pauseTimeout = pauseTimeout;
+			});
+			$socket.on('playerDisconnect', () => {
+				player.queue = [];
+				player.volume = 100;
+				player.loop = 0;
+				player.filters = { bassboost: false, nightcore: false };
+				player.paused = false;
+				player.playing = { track: {}, elapsed: 0, duration: 0, skip: {}, nothingPlaying: true };
+				player.timeout = false;
+				player.pauseTimeout = false;
+				player.connected = false;
+				player.channel = undefined;
+				player.textChannel = undefined;
+				identifier = '';
+				position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
+				volume = player.volume;
+			});
+			$socket.on('stayFeatureUpdate', state => {
+				settings.stay.enabled = state.enabled;
+			});
+			$socket.on('autoLyricsFeatureUpdate', state => {
+				settings.autolyrics.enabled = state.enabled;
+			});
+			$socket.on('smartQueueFeatureUpdate', state => {
+				settings.smartqueue.enabled = state.enabled;
+			});
+		}
 	});
 </script>
 

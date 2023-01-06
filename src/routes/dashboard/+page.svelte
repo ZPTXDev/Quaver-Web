@@ -7,9 +7,9 @@
 	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
 	import { LogoSquare } from '$images';
 	import { manualLoading, socket } from '$lib/stores';
-	import { signout, type WebGuild, type WebUser } from '$lib/util';
+	import { fetchGuilds, fetchUser, signout, sortGuilds, type WebGuild, type WebUser } from '$lib/util';
 	import { paginate } from '@zptxdev/zptx-lib';
-	import type { APIGuild, APIUser } from 'discord-api-types/v10';
+	import type { APIGuild } from 'discord-api-types/v10';
 	import { Button, Card, Pagination, Search, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import { ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
@@ -54,54 +54,23 @@
 		page = 1;
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		if (!$socket.connected) {
 			goto('/');
 			return;
 		}
-		$socket.emit(
-			'fetchuser',
-			[data.token],
-			async (response: { status: string; user: APIUser; version: string }) => {
-				if (response.status !== 'success') {
-					await signout();
-					goto('/');
-					return;
-				}
-				$socket.emit(
-					'fetchguilds',
-					[data.token],
-					async (rsp: {
-						status: string;
-						guilds: { message?: string } & WebGuild[];
-						version: string;
-					}) => {
-						if (rsp.status !== 'success') {
-							await signout();
-							goto('/');
-							return;
-						}
-						const webGuilds = rsp.guilds ?? [];
-						webGuilds.sort((a, b) => {
-							if (a.botInGuild && !a.idle && b.botInGuild && b.idle) return -1;
-							if (b.botInGuild && !b.idle && a.botInGuild && a.idle) return 1;
-							if (a.botInGuild && !b.botInGuild) return -1;
-							if (b.botInGuild && !a.botInGuild) return 1;
-							if (!a.permissions || !b.permissions) return 0;
-							if ((Number(a.permissions) & 0x20) !== 0 && (Number(b.permissions) & 0x20) === 0)
-								return -1;
-							if ((Number(b.permissions) & 0x20) !== 0 && (Number(a.permissions) & 0x20) === 0)
-								return 1;
-							return a.name.localeCompare(b.name);
-						});
-						user = response.user;
-						guilds = webGuilds;
-						version = rsp.version;
-						$manualLoading = false;
-					}
-				);
-			}
-		);
+		try {
+			({ user, version } = await fetchUser($socket, data.token as string));
+			({ guilds } = await fetchGuilds($socket, data.token as string));
+			const webGuilds = guilds ?? [];
+			webGuilds.sort(sortGuilds);
+			guilds = webGuilds;
+			$manualLoading = false;
+		}
+		catch (error) {
+			await signout();
+			goto('/');
+		}
 	});
 </script>
 
