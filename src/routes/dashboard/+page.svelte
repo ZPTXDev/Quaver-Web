@@ -14,7 +14,7 @@
 	import { ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
 	import Footer from '../Footer.svelte';
 	import Navbar from '../Navbar.svelte';
-	import PremiumDrawer from '../PremiumDrawer.svelte';
+	import PromoDrawer from '../PromoDrawer.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -123,7 +123,7 @@
 	}
 </style>
 
-<PremiumDrawer bind:hidden={promoHidden} />
+<PromoDrawer bind:hidden={promoHidden} />
 <Navbar {user} />
 <div class="container mx-auto my-4">
 	<Search size="md" bind:value on:input={e => search(value)}></Search>

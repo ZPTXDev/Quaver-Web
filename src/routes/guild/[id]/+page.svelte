@@ -14,7 +14,7 @@
 	import { ToastContainer, toasts } from 'svelte-toasts';
 	import Footer from '../../Footer.svelte';
 	import Navbar from '../../Navbar.svelte';
-	import PremiumDrawer from '../../PremiumDrawer.svelte';
+	import PromoDrawer from '../../PromoDrawer.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -334,7 +334,7 @@
 		{data.description}
 	</Toast>
 </ToastContainer>
-<PremiumDrawer bind:hidden={promoHidden} />
+<PromoDrawer bind:hidden={promoHidden} />
 <Navbar {user} />
 <div class="container mx-auto my-4">
 	<Breadcrumb>
