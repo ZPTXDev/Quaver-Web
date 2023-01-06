@@ -3,13 +3,12 @@
 </svelte:head>
 
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-    import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import discord from '$lib/images/discord.svg';
 	import logo from '$lib/images/logo.svg';
-	import { manualLoading } from '$lib/loading';
-	import { socket } from '$lib/socket';
+	import { manualLoading, socket } from '$lib/stores';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';

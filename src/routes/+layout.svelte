@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { beforeNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
-	import { manualLoading } from '$lib/loading';
+	import { manualLoading } from '$lib/stores';
 	import { Spinner } from 'flowbite-svelte';
 	import { toasts } from 'svelte-toasts';
 	import { fade } from 'svelte/transition';

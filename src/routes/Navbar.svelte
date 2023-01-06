@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import logo from '$lib/images/logo.svg';
-    import { managerMode } from '$lib/managerMode';
+    import { managerMode } from '$lib/stores';
     import type { APIUser } from 'discord-api-types/v10';
     import { Avatar, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand, Toggle } from 'flowbite-svelte';
     export let user: APIUser & { manager?: boolean };

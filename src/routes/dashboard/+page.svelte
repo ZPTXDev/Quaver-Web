@@ -3,11 +3,10 @@
 </svelte:head>
 
 <script lang="ts">
-	import { env } from '$env/dynamic/public';
 	import { goto } from '$app/navigation';
+	import { env } from '$env/dynamic/public';
 	import logo from '$lib/images/logo-square.svg';
-	import { manualLoading } from '$lib/loading';
-	import { socket } from '$lib/socket';
+	import { manualLoading, socket } from '$lib/stores';
 	import { paginate } from '@zptxdev/zptx-lib';
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Button, Card, CloseButton, Drawer, Pagination, Search, Tooltip } from 'flowbite-svelte';

@@ -5,9 +5,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
-	import { manualLoading } from '$lib/loading';
-	import { managerMode } from '$lib/managerMode';
-	import { socket } from '$lib/socket';
+	import { managerMode, manualLoading, socket } from '$lib/stores';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, CloseButton, Drawer, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
