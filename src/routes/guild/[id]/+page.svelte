@@ -6,6 +6,7 @@
 	import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import { managerMode, manualLoading, socket } from '$lib/stores';
+	import { signout } from '$lib/util';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, CloseButton, Drawer, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
@@ -167,15 +168,16 @@
 		$socket.emit(
 			'fetchuser',
 			[data.token],
-			(response: { status: string; user: APIUser & { manager: boolean }; version: string }) => {
+			async (response: { status: string; user: APIUser & { manager: boolean }; version: string }) => {
 				if (response.status !== 'success') {
-					goto(`/signout?redirect=${data.guildId}`);
+					await signout(data.guildId);
+					goto('/');
 					return;
 				}
 				$socket.emit(
 					'fetchguilds',
 					[data.token],
-					(rsp: {
+					async (rsp: {
 						status: string;
 						guilds: { message?: string } & (APIGuild & {
 							botInGuild?: boolean;
@@ -186,7 +188,8 @@
 						version: string;
 					}) => {
 						if (rsp.status !== 'success') {
-							goto(`/signout?redirect=${data.guildId}`);
+							await signout(data.guildId);
+							goto(`/`);
 							return;
 						}
 						const guilds = rsp.guilds ?? [];

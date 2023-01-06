@@ -7,6 +7,7 @@
 	import { env } from '$env/dynamic/public';
 	import logo from '$lib/images/logo-square.svg';
 	import { manualLoading, socket } from '$lib/stores';
+	import { signout } from '$lib/util';
 	import { paginate } from '@zptxdev/zptx-lib';
 	import type { APIGuild, APIUser } from 'discord-api-types/v10';
 	import { Button, Card, CloseButton, Drawer, Pagination, Search, Tooltip } from 'flowbite-svelte';
@@ -72,15 +73,16 @@
 		$socket.emit(
 			'fetchuser',
 			[data.token],
-			(response: { status: string; user: APIUser; version: string }) => {
+			async (response: { status: string; user: APIUser; version: string }) => {
 				if (response.status !== 'success') {
-					goto('/signout');
+					await signout();
+					goto('/');
 					return;
 				}
 				$socket.emit(
 					'fetchguilds',
 					[data.token],
-					(rsp: {
+					async (rsp: {
 						status: string;
 						guilds: { message?: string } & (APIGuild & {
 							botInGuild?: boolean;
@@ -91,7 +93,8 @@
 						version: string;
 					}) => {
 						if (rsp.status !== 'success') {
-							goto('/signout');
+							await signout();
+							goto('/');
 							return;
 						}
 						const webGuilds = rsp.guilds ?? [];

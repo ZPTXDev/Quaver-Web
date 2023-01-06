@@ -2,6 +2,7 @@
     import { goto } from '$app/navigation';
     import logo from '$lib/images/logo.svg';
     import { managerMode } from '$lib/stores';
+    import { signout } from '$lib/util';
     import type { APIUser } from 'discord-api-types/v10';
     import { Avatar, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand, Toggle } from 'flowbite-svelte';
     export let user: APIUser & { manager?: boolean };
@@ -40,7 +41,7 @@
                     </DropdownItem>
                     <DropdownDivider></DropdownDivider>
                 {/if}
-                <DropdownItem href="/signout">Sign out</DropdownItem>
+                <DropdownItem on:click={async () => {await signout(); goto('/');}}>Sign out</DropdownItem>
             </Dropdown>
         {/await}
     </div>
