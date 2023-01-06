@@ -48,9 +48,7 @@
             $socket.once('connect', () => {
                 // since there's a token cookie, we'll forward user to /dashboard
                 if (data.token) goto('/dashboard');
-                // since there's a way to authenticate, we'll reload
                 if (code) exchange();
-                // there's nothing else so let's just indicate we connected
                 connected = true;
             });
         }
