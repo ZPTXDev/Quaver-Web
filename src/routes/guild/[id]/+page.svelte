@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { Footer, Navbar, PromoDrawer } from '$components';
 	import { env } from '$env/dynamic/public';
 	import { managerMode, manualLoading, socket } from '$lib/stores';
 	import { getInitials, signout, type WebGuild, type WebUser } from '$lib/util';
@@ -12,9 +13,6 @@
 	import { onMount } from 'svelte';
 	import { ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
 	import { ToastContainer, toasts } from 'svelte-toasts';
-	import Footer from '../../Footer.svelte';
-	import Navbar from '../../Navbar.svelte';
-	import PromoDrawer from '../../PromoDrawer.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;

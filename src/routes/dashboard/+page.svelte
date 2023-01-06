@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { Footer, Navbar, PromoDrawer } from '$components';
 	import logo from '$lib/images/logo-square.svg';
 	import { manualLoading, socket } from '$lib/stores';
 	import { signout, type WebGuild, type WebUser } from '$lib/util';
@@ -12,9 +13,6 @@
 	import { Button, Card, Pagination, Search, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import { ArrowRight, ChevronLeft, ChevronRight, MagnifyingGlass, MinusCircle, MusicalNote, PauseCircle, PlayCircle, Plus } from 'svelte-heros-v2';
-	import Footer from '../Footer.svelte';
-	import Navbar from '../Navbar.svelte';
-	import PromoDrawer from '../PromoDrawer.svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
