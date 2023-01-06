@@ -13,6 +13,14 @@ export const getInitials = (name: string) =>
 		.split(' ')
 		.map((word: string) => word[0])
 		.join('');
+export const preload = (src: string): Promise<string> => {
+	if (src === '') return Promise.resolve('');
+	return new Promise(function (resolve) {
+		const img = new Image();
+		img.onload = () => resolve(src);
+		img.src = src;
+	});
+};
 export const signout = async (guildId?: Snowflake) => {
 	const result = await fetch('/signout', {
 		method: 'POST',
