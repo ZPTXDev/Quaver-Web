@@ -1,38 +1,61 @@
-# create-svelte
+<h1 align="center" style="border-bottom: none;">Quaver-Web</h1>
+<h3 align="center">Web dashboard add-on for Quaver.</h3>
+<p align="center">
+    <a href="https://go.zptx.dev/discord">
+        <img alt="Discord" src="https://img.shields.io/discord/334654301651730432?label=chat%20with%20us&style=flat-square">
+    </a>
+</p>
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+# ⚠️ Warning
 
-## Creating a project
+Quaver-Web is in an experimental state. Unless you have good reason to, you should not be using it, especially in conjunction with a public instance of Quaver.
 
-If you're seeing this, you've probably already done this step. Congrats!
+Please proceed with caution. If you need help, getting it started regardless, feel free to ask your question in the Discord server above.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+# 🚀 Getting Started
 
-# create a new project in my-app
-npm create svelte@latest my-app
+## Prerequisites
+
+Quaver-Web requires a functional instance of Quaver to work.
+
+Ensure your Quaver configuration includes the following:
+
+```json
+"features": {
+    "web": {
+        "enabled": true,
+        "port": 3000,
+        "allowedOrigins": [
+            "http://localhost"
+        ],
+        "encryptionKey": "Type an encryption key here",
+        "https": {
+            "enabled": false,
+            "key": "key.pem",
+            "cert": "cert.pem"
+        },
+        "dashboardURL": "http://example.com"
+    }
+}
 ```
 
-## Developing
+Please modify the configuration as necessary. You may refer to [Quaver Configuration Guide](https://github.com/ZPTXDev/Quaver/blob/master/CONFIGURATION.md) for more information.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Setup
 
-```bash
-npm run dev
+1. Clone the repository and run `npm install` to install dependencies.
+2. Create a `.env` file in the root directory of the project and add the following:
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+```env
+PUBLIC_WEBSOCKET_HOST=http://localhost:3000
+PUBLIC_DISCORD_CLIENT_ID=123456789012345678
+PUBLIC_SUPPORT_SERVER=http://discord.gg/
+PUBLIC_PREMIUM_URL=http://example.com/premium
+PRIVATE_SECURE=false
 ```
 
-## Building
+> Note: `PRIVATE_SECURE` must be set to `false` if you are running Quaver-Web on HTTP instead of HTTPS.
 
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+3. Run `npm run build` to build the project.
+4. Run `npm run preview` to start the preview server. (default port is 4173)
+5. Navigate to `http://localhost:4173` to view the dashboard.
