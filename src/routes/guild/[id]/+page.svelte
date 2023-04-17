@@ -2,6 +2,12 @@
     <title>Manage {guild?.name ?? 'Server'} | Quaver</title> 
 </svelte:head>
 
+<style>
+	.local :global(.volumeSlider) {
+		width: 40% !important;
+	}
+</style>
+
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
@@ -11,7 +17,7 @@
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
 	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowPathRoundedSquare, ArrowsRightLeft, ArrowTopRightOnSquare, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
+	import { ArrowPathRoundedSquare, ArrowTopRightOnSquare, ArrowsRightLeft, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
 	import { ToastContainer, toasts } from 'svelte-toasts';
 	import type { PageData } from './$types';
 
@@ -288,7 +294,7 @@
 		<BreadcrumbItem>{guild.name}</BreadcrumbItem>
 	</Breadcrumb>
 </div>
-<div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4">
+<div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4 local">
 	<div class="w-full lg:w-1/4 space-y-4">
 		{#await preload(identifier)}
 			<CardPlaceholder />
@@ -355,7 +361,7 @@
 							{:else}
 								<SpeakerXMark></SpeakerXMark>
 							{/if}
-							<Range on:pointerdown={() => updateVolume = false} on:pointerup={() => {update('volume', volume); updateVolume = true;}} on:input={updateVolumeFromInput} min={0} max={200} value={volume} class="mx-2 w-2/5"></Range>
+							<Range on:pointerdown={() => updateVolume = false} on:pointerup={() => {update('volume', volume); updateVolume = true;}} on:input={updateVolumeFromInput} min={0} max={200} value={volume} class="mx-2 volumeSlider"></Range>
 						</div>
 					</div>
 				{/if}
