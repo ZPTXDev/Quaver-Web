@@ -46,7 +46,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@zptxdev/zptx-lib": "^1.1.0",
+		"@zptxdev/zptx-lib": "1.0.10",
 		"patch-package": "^6.5.1",
 		"socket.io-client": "^4.6.1",
 		"svelte-toasts": "^1.1.2"
