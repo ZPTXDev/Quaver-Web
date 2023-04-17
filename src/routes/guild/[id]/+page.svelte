@@ -6,6 +6,10 @@
 	.local :global(.volumeSlider) {
 		width: 40% !important;
 	}
+
+	.local :global(.perPageSelector) {
+		width: 8.333333% !important;
+	}
 </style>
 
 <script lang="ts">
@@ -408,7 +412,7 @@
 			</div>
 			<div class="container inline-flex mx-auto mb-2">
 				<Search size="md" bind:value on:input={e => search(value)}></Search>
-				<Select on:change={updatePerPage} class="ml-1 w-1/12" placeholder="per page" value={perPage} items={[5, 10, 15, 20, 25].map(n => ({ value: n, name: n.toString() }))}></Select>
+				<Select on:change={updatePerPage} class="ml-1 perPageSelector" placeholder="per page" value={perPage} items={[5, 10, 15, 20, 25].map(n => ({ value: n, name: n.toString() }))}></Select>
 			</div>
 			<Listgroup class="border-0 dark:!bg-transparent w-full">
 				{#if paginatedQueue.length === 0}
