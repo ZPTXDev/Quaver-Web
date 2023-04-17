@@ -414,7 +414,7 @@
 				<Search size="md" bind:value on:input={e => search(value)}></Search>
 				<Select on:change={updatePerPage} class="ml-1 perPageSelector" placeholder="per page" value={perPage} items={[5, 10, 15, 20, 25].map(n => ({ value: n, name: n.toString() }))}></Select>
 			</div>
-			<Listgroup class="border-0 dark:!bg-transparent w-full">
+			<Listgroup class="dark:!bg-transparent w-full">
 				{#if paginatedQueue.length === 0}
 					<div class="col-span-full text-center w-full p-8">
 						<PendingAction icon={MagnifyingGlass} title="No tracks found" subtitle="Try narrowing your search criteria." />
