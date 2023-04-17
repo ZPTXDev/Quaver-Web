@@ -332,7 +332,7 @@
 									Live
 								</Badge>
 							{/if}
-							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.duration / 1000} value={position} disabled={(player.playing.track?.requester !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />					
+							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.track?.isStream ? 100 : player.playing.duration / 1000} value={player.playing.track?.isStream ? 100 : position} disabled={(player.playing.track?.requester !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />					
 							{#if !player.playing.track?.isStream || player.playing.nothingPlaying}
 								{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : player.playing.duration), true)}
 							{/if}
