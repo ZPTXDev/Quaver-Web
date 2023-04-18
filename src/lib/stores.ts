@@ -25,7 +25,7 @@ export const tips = readable([
 	"Quaver's translations are entirely crowdsourced.",
 	'The source code for this website is available on GitHub!',
 	'Quaver was created on March 22nd, 2021.',
-	'The website has gone through at least 3 redesigns.'
+	'This website has gone through about 3 redesigns.'
 ]);
 export const featureMap = readable({
 	stay: {
