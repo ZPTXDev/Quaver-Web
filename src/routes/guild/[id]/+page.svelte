@@ -184,7 +184,7 @@
 		});
 	}
 	function addTrack(value: string, target: any) {
-		if (addingTrack) return;
+		if (addingTrack || !value) return;
 		addingTrack = true;
 		$socket.emit('update', [guild.id, { type: 'add', value }], (r: { status: string }) => {
 			switch (r.status) {
