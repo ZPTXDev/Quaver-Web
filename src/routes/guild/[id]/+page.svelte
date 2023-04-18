@@ -2,16 +2,6 @@
     <title>Manage {guild?.name ?? 'Server'} | Quaver</title> 
 </svelte:head>
 
-<style>
-	.local :global(.volumeSlider) {
-		width: 40% !important;
-	}
-
-	.local :global(.perPageSelector) {
-		width: 8.333333% !important;
-	}
-</style>
-
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
@@ -19,9 +9,9 @@
 	import { featureMap, managerMode, manualLoading, socket } from '$lib/stores';
 	import { fetchGuilds, fetchUser, getInitials, join, request, signout, type WebGuild, type WebUser } from '$lib/util';
 	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
-	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Toast, Toggle, Tooltip } from 'flowbite-svelte';
+	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Input, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Spinner, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowPathRoundedSquare, ArrowTopRightOnSquare, ArrowsRightLeft, CheckCircle, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
+	import { ArrowPathRoundedSquare, ArrowTopRightOnSquare, ArrowsRightLeft, CheckCircle, ChevronDoubleRight, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Plus, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
 	import { ToastContainer, toasts } from 'svelte-toasts';
 	import type { PageData } from './$types';
 
@@ -50,6 +40,7 @@
 	let updatePosition = true;
 	let updateVolume = true;
 	let perPage = 5;
+	let addingTrack = false;
 
 	$: player;
 	$: user;
@@ -190,6 +181,46 @@
 					toasts.success('Successfully removed track.');
 					break;
 			}
+		});
+	}
+	function addTrack(value: string, target: any) {
+		if (addingTrack) return;
+		addingTrack = true;
+		$socket.emit('update', [guild.id, { type: 'add', value }], (r: { status: string }) => {
+			switch (r.status) {
+				case 'error-generic':
+					toasts.error('Something went wrong.');
+					break;
+				case 'error-auth':
+					toasts.error('You do not have permission to perform that action.');
+					break;
+				case 'error-channel-unsupported':
+					toasts.error('Only voice channels are supported when starting a session via web. (for now)');
+					break;
+				case 'error-bot-permission':
+					toasts.error('Quaver does not have permission to connect to or speak in your voice channel.');
+					break;
+				case 'error-bot-timed-out':
+					toasts.error('Quaver is timed out in your server.');
+					break;
+				case 'error-feature-disabled':
+					toasts.error('Adding songs from Spotify is currently disabled.');
+					break;
+				case 'error-no-results':
+					toasts.error('No results found.');
+					break;
+				case 'error-spotify-too-many-tracks':
+					toasts.error('You can only add up to 500 tracks at a time from Spotify.');
+					break;
+				case 'success':
+					toasts.success('Successfully added track(s).');
+					target.value = '';
+					break;
+				default:
+					toasts.error('Something went wrong.');
+					break;
+			}
+			addingTrack = false;
 		});
 	}
 
@@ -389,7 +420,7 @@
 							{:else}
 								<SpeakerXMark></SpeakerXMark>
 							{/if}
-							<Range on:pointerdown={() => updateVolume = false} on:pointerup={() => {update('volume', volume); updateVolume = true;}} on:input={updateVolumeFromInput} min={0} max={200} value={volume} class="mx-2 volumeSlider"></Range>
+							<Range on:pointerdown={() => updateVolume = false} on:pointerup={() => {update('volume', volume); updateVolume = true;}} on:input={updateVolumeFromInput} min={0} max={200} value={volume} class="mx-2 !w-2/5"></Range>
 						</div>
 					</div>
 				{/if}
@@ -424,90 +455,113 @@
 			{/each}
 		</Card>
 	</div>
-	<Card class="w-full lg:w-3/4 h-min{queue.length === 0 ? ' text-center items-center justify-center' : ''}" size="xl" padding="xl">
-		{#if queue.length === 0}
-			<div class="py-24">
-				<PendingAction icon={EllipsisHorizontalCircle} title="Queue is empty" subtitle="Add some songs to get started!" />
-			</div>
-		{:else}
-			<div class="flex justify-between items-center mb-4">
-				<h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Queue</h5>
-				{player?.queue?.length ?? '0'} track{player?.queue?.length === 1 ? '' : 's'} • {getQueueDuration(player?.queue ?? [])}
-			</div>
-			<div class="container inline-flex mx-auto mb-2">
-				<Search size="md" bind:value on:input={e => search(value)}></Search>
-				<Select on:change={updatePerPage} class="ml-1 perPageSelector" placeholder="per page" value={perPage} items={[5, 10, 15, 20, 25].map(n => ({ value: n, name: n.toString() }))}></Select>
-			</div>
-			<Listgroup class="dark:!bg-transparent w-full">
-				{#if paginatedQueue.length === 0}
-					<div class="col-span-full text-center w-full p-8">
-						<PendingAction icon={MagnifyingGlass} title="No tracks found" subtitle="Try narrowing your search criteria." />
-					</div>
+	<div class="w-full lg:w-3/4 h-min space-y-4">
+		<Card size="xl" padding="xl">
+			<h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white mb-4">
+				{#if !player?.connected}
+					Start a Session
 				{:else}
-					{#each paginatedQueue[page - 1] as track}
-						<ListgroupItem>
-							<div class="flex items-center space-x-4">
-								<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requester}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
-								<div class="flex-1 min-w-0">
-									<p class="text-sm font-medium text-gray-900 truncate dark:text-white">
-										{track.title}
-									</p>
-									<p class="text-sm text-gray-500 truncate dark:text-gray-400">
-										{track.author}
-									</p>
-									<Badge color="dark" class="mt-1 mr-1">
-										<Hashtag class="mr-1 w-3 h-3" variation="solid"></Hashtag>
-										{player.queue.indexOf(track) + 1}
-									</Badge>
-									<Badge color="dark" class="mt-1 mr-1">
-										<User class="mr-1 w-3 h-3" variation="solid"></User>
-										{track.requesterTag}
-									</Badge>
-									{#if track.isStream}
-										<Badge color="red">
-											<Signal class="mr-1 w-3 h-3" variation="solid"></Signal>
-											Live
-										</Badge>
-									{:else}
-										<Badge color="dark">
-											<Clock class="mr-1 w-3 h-3" variation="solid"></Clock>
-											{msToTimeString(msToTime(track.length), true)}
-										</Badge>
-									{/if}
-								</div>
-								<div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
-									<ButtonGroup>
-										{#if track.requester === user.id || (Number(guild?.permissions ?? 0) & 0x20) !== 0 || $managerMode}
-											<Button color="red" on:click={() => update('remove', player.queue.indexOf(track))}>
-												<XMark class="w-5 h-5 mr-2"></XMark>
-												Remove{track.requester !== user.id ? ' forcefully' : ''}
-											</Button>
-										{/if}
-										<Button color="blue" href={track.uri} target="_blank">
-											<ArrowTopRightOnSquare class="w-5 h-5 mr-2"></ArrowTopRightOnSquare>
-											Link
-										</Button>
-									</ButtonGroup>
-								</div>
-							</div>
-						</ListgroupItem>
-					{/each}
+					Add to Queue
 				{/if}
-			</Listgroup>
-			<div class="container mt-4 mx-auto justify-center flex space-x-3">
-				<Pagination {pages} on:previous={previous} on:next={next} on:click={click} icon>
-					<svelte:fragment slot="prev">
-						<span class="sr-only">Previous</span>
-						<ChevronLeft class="w-5 h-5"/>
-					  </svelte:fragment>
-					  <svelte:fragment slot="next">
-						<span class="sr-only">Next</span>
-						<ChevronRight class="w-5 h-5"/>
-					</svelte:fragment>
-				</Pagination>
-			</div>
-		{/if}
-	</Card>
+			</h5>
+			<form class="flex gap-1" action="#" on:submit={event => {event.preventDefault(); addTrack(event.target[0].value, event.target[0]);}}>
+				<Input type="text" size="md" placeholder="YouTube search query or a link from Spotify or YouTube" disabled={addingTrack}></Input>
+				<Button type="submit" class="!p-2.5" disabled={addingTrack}>
+					{#if addingTrack}
+						<Spinner size="4" class="w-5 h-5" color="white"></Spinner>
+					{:else if !player?.connected}
+						<ChevronDoubleRight class="w-5 h-5"></ChevronDoubleRight>
+					{:else}
+						<Plus class="w-5 h-5"></Plus>						
+					{/if}
+				</Button>
+			</form>
+		</Card>
+		<Card class={queue.length === 0 ? 'text-center items-center justify-center' : ''} size="xl" padding="xl">
+			{#if queue.length === 0}
+				<div class="py-24">
+					<PendingAction icon={EllipsisHorizontalCircle} title="Queue is empty" subtitle="Add some songs to get started!" />
+				</div>
+			{:else}
+				<div class="flex justify-between items-center mb-4">
+					<h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Queue</h5>
+					{player?.queue?.length ?? '0'} track{player?.queue?.length === 1 ? '' : 's'} • {getQueueDuration(player?.queue ?? [])}
+				</div>
+				<div class="container inline-flex mx-auto mb-2">
+					<Search size="md" bind:value on:input={e => search(value)}></Search>
+					<Select on:change={updatePerPage} class="ml-1 !w-1/12" placeholder="per page" value={perPage} items={[5, 10, 15, 20, 25].map(n => ({ value: n, name: n.toString() }))}></Select>
+				</div>
+				<Listgroup class="dark:!bg-transparent w-full">
+					{#if paginatedQueue.length === 0}
+						<div class="col-span-full text-center w-full p-8">
+							<PendingAction icon={MagnifyingGlass} title="No tracks found" subtitle="Try narrowing your search criteria." />
+						</div>
+					{:else}
+						{#each paginatedQueue[page - 1] as track}
+							<ListgroupItem>
+								<div class="flex items-center space-x-4">
+									<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requester}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
+									<div class="flex-1 min-w-0">
+										<p class="text-sm font-medium text-gray-900 truncate dark:text-white">
+											{track.title}
+										</p>
+										<p class="text-sm text-gray-500 truncate dark:text-gray-400">
+											{track.author}
+										</p>
+										<Badge color="dark" class="mt-1 mr-1">
+											<Hashtag class="mr-1 w-3 h-3" variation="solid"></Hashtag>
+											{player.queue.indexOf(track) + 1}
+										</Badge>
+										<Badge color="dark" class="mt-1 mr-1">
+											<User class="mr-1 w-3 h-3" variation="solid"></User>
+											{track.requesterTag}
+										</Badge>
+										{#if track.isStream}
+											<Badge color="red">
+												<Signal class="mr-1 w-3 h-3" variation="solid"></Signal>
+												Live
+											</Badge>
+										{:else}
+											<Badge color="dark">
+												<Clock class="mr-1 w-3 h-3" variation="solid"></Clock>
+												{msToTimeString(msToTime(track.length), true)}
+											</Badge>
+										{/if}
+									</div>
+									<div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
+										<ButtonGroup>
+											{#if track.requester === user.id || (Number(guild?.permissions ?? 0) & 0x20) !== 0 || $managerMode}
+												<Button color="red" on:click={() => update('remove', player.queue.indexOf(track))}>
+													<XMark class="w-5 h-5 mr-2"></XMark>
+													Remove{track.requester !== user.id ? ' forcefully' : ''}
+												</Button>
+											{/if}
+											<Button color="blue" href={track.uri} target="_blank">
+												<ArrowTopRightOnSquare class="w-5 h-5 mr-2"></ArrowTopRightOnSquare>
+												Link
+											</Button>
+										</ButtonGroup>
+									</div>
+								</div>
+							</ListgroupItem>
+						{/each}
+					{/if}
+				</Listgroup>
+				<div class="container mt-4 mx-auto justify-center flex space-x-3">
+					<Pagination {pages} on:previous={previous} on:next={next} on:click={click} icon>
+						<svelte:fragment slot="prev">
+							<span class="sr-only">Previous</span>
+							<ChevronLeft class="w-5 h-5"/>
+						  </svelte:fragment>
+						  <svelte:fragment slot="next">
+							<span class="sr-only">Next</span>
+							<ChevronRight class="w-5 h-5"/>
+						</svelte:fragment>
+					</Pagination>
+				</div>
+			{/if}
+		</Card>
+	</div>
 </div>
 <br>
 <div class="container mx-auto">
