@@ -27,6 +27,7 @@
 
 	export let data: PageData;
 	let player: any = {
+		connected: false,
 		playing: {
 			nothingPlaying: true,
 		},
@@ -218,9 +219,8 @@
 			}
 			await join($socket, guild.id);
 			const p = await request($socket, guild.id, 'player');
-			if (p.response) player = p.response;
+			if (p.response !== null) player = p.response;
 			identifier = !player.playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && player.playing.track.identifier ? player.playing.track.identifier : '';
-			player.connected = true;
 			position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
 			volume = player.volume;
 			queue = player.queue ?? [];
