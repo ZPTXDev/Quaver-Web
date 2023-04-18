@@ -119,13 +119,25 @@
 		], (r: { status: string }) => {
 			if (r.status !== 'success' && event.target instanceof HTMLInputElement) {
 				event.target.checked = !enabled;
-				switch (id) {
-					case 'stay':
-						toasts.error('Quaver needs to be in a voice channel.');
-						break;
-					default:
+				switch (r.status) {
+					case 'error-auth':
+						toasts.error('You do not have permission to perform that action.');
+						return;
+					case 'error-generic':
 						toasts.error('Something went wrong.');
-						break;
+						return;
+					case 'error-channel-mismatch':
+						toasts.error('You are not in the same channel as Quaver.');
+						return;
+					case 'error-inactive-session':
+						toasts.error('There is no active session.');
+						return;
+					case 'error-feature-disabled':
+						toasts.error('This feature is currently disabled.');
+						return;
+					case 'error-feature-not-whitelisted':
+						toasts.error('You do not have permission to use this feature.');
+						return;
 				}
 				return;
 			}
@@ -148,13 +160,25 @@
 	}
 	function update(type: string, value?: any) {
 		$socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
-			if (r.status === 'error-auth') {
-				toasts.error('You do not have permission to perform that action.');
-				return;
-			}
-			if (r.status !== 'success') {
-				toasts.error('You need to be in Quaver\'s voice channel.');
-				return;
+			switch (r.status) {
+				case 'error-auth':
+					toasts.error('You do not have permission to perform that action.');
+					return;
+				case 'error-generic':
+					toasts.error('Something went wrong.');
+					return;
+				case 'error-channel-mismatch':
+					toasts.error('You are not in the same channel as Quaver.');
+					return;
+				case 'error-inactive-session':
+					toasts.error('There is no active session.');
+					return;
+				case 'error-feature-disabled':
+					toasts.error('This feature is currently disabled.');
+					return;
+				case 'error-feature-not-whitelisted':
+					toasts.error('You do not have permission to use this feature.');
+					return;
 			}
 			switch (type) {
 				case 'bassboost':
