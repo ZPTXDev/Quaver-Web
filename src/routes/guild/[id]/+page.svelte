@@ -212,6 +212,9 @@
 				case 'error-spotify-too-many-tracks':
 					toasts.error('You can only add up to 500 tracks at a time from Spotify.');
 					break;
+				case 'error-user-not-in-channel':
+					toasts.error('You need to be in a voice channel.');
+					break;
 				case 'success':
 					toasts.success('Successfully added track(s).');
 					target.value = '';
