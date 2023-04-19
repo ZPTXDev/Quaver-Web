@@ -194,9 +194,6 @@
 				case 'error-auth':
 					toasts.error('You do not have permission to perform that action.');
 					break;
-				case 'error-channel-unsupported':
-					toasts.error('Only voice channels are supported when starting a session via web. (for now)');
-					break;
 				case 'error-bot-permission':
 					toasts.error('Quaver does not have permission to connect to or speak in your voice channel.');
 					break;
