@@ -358,12 +358,12 @@
 		<BreadcrumbItem>{guild.name}</BreadcrumbItem>
 	</Breadcrumb>
 </div>
-<div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4 local">
+<div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4">
 	<div class="w-full lg:w-1/4 space-y-4">
 		{#await preload(identifier)}
 			<CardPlaceholder />
 		{:then source}
-			<Card img={source}>
+			<Card img={source} class="lg:max-w-sm !max-w-full">
 				<h5 id="track" class="{!player?.playing?.nothingPlaying ? 'mb-2 ' : ''}text-2xl font-bold tracking-tight text-gray-900 dark:text-white truncate">{player?.playing?.nothingPlaying ? player.connected ? 'Nothing playing' : 'Not in a voice channel' : player.playing.track.title}</h5>
 				{#if !player?.playing?.nothingPlaying}
 					<Tooltip triggeredBy="#track">{player.playing.track.title}</Tooltip>
@@ -431,7 +431,7 @@
 				{/if}
 			</Card>
 		{/await}
-		<Card>
+		<Card class="lg:max-w-sm !max-w-full">
 			{#if player.textChannel && player.channel}
 				<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Session</Heading>
 				<List tag="ul" class="mb-2 space-y-1" list="none">
