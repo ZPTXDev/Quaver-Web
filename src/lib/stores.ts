@@ -5,7 +5,8 @@ import { readable, writable } from 'svelte/store';
 
 export const managerMode = writable(false);
 export const manualLoading = writable(false);
-export const socket = readable(io(env.PUBLIC_WEBSOCKET_HOST));
+const url = new URL(env.PUBLIC_WEBSOCKET_HOST);
+export const socket = readable(url.pathname === '/' ? io(url.origin) : io(url.origin, { path: url.pathname }));
 export const transitionParams = readable({
 	x: -320,
 	duration: 200,
