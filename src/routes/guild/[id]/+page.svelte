@@ -65,7 +65,7 @@
 	const search = (query: string) => {
 		let tempQueue = [];
 		if (query.length > 0) {
-			tempQueue = queue.filter((track: { title: string }) => track.title?.toLowerCase().includes(query.toLowerCase()));
+			tempQueue = queue.filter((track: { info: { title: string } }) => track.info.title?.toLowerCase().includes(query.toLowerCase()));
 		} else {
 			tempQueue = queue;
 		}
@@ -91,7 +91,7 @@
 		});
 	}
 	function getQueueDuration(queue: any[]) {
-		return msToTimeString(msToTime(queue.filter(track => !track.isStream).map(track => track.length).reduce((acc, a) => acc + a, 0)), true);
+		return msToTimeString(msToTime(queue.filter(track => !track.info.isStream).map(track => track.info.length).reduce((acc, a) => acc + a, 0)), true);
 	}
 	function settingsToggled(event: Event) {
 		if (!event.target || !(event.target instanceof HTMLInputElement)) return;
@@ -256,7 +256,7 @@
 			await join($socket, guild.id);
 			const p = await request($socket, guild.id, 'player');
 			if (p.response !== null) player = p.response;
-			identifier = !player.playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && player.playing.track.identifier ? player.playing.track.identifier : '';
+			identifier = !player.playing?.nothingPlaying && player.playing.track?.info.sourceName === 'youtube' && player.playing.track.info.identifier ? player.playing.track.info.identifier : '';
 			position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
 			volume = player.volume;
 			queue = player.queue ?? [];
@@ -271,7 +271,7 @@
 		finally {
 			$socket.on('intervalTrackUpdate', playing => {
 				player.playing = playing;
-				identifier = !playing?.nothingPlaying && player.playing.track?.sourceName === 'youtube' && playing.track.identifier ? playing.track.identifier : '';
+				identifier = !player.playing?.nothingPlaying && player.playing.track?.info.sourceName === 'youtube' && player.playing.track.info.identifier ? player.playing.track.info.identifier : '';
 				player.connected = true;
 				if (updatePosition) position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
 				if (updateVolume) volume = player.volume;
@@ -364,18 +364,18 @@
 			<CardPlaceholder />
 		{:then source}
 			<Card img={source} class="lg:max-w-sm !max-w-full">
-				<h5 id="track" class="{!player?.playing?.nothingPlaying ? 'mb-2 ' : ''}text-2xl font-bold tracking-tight text-gray-900 dark:text-white truncate">{player?.playing?.nothingPlaying ? player.connected ? 'Nothing playing' : 'Not in a voice channel' : player.playing.track.title}</h5>
+				<h5 id="track" class="{!player?.playing?.nothingPlaying ? 'mb-2 ' : ''}text-2xl font-bold tracking-tight text-gray-900 dark:text-white truncate">{player?.playing?.nothingPlaying ? player.connected ? 'Nothing playing' : 'Not in a voice channel' : player.playing.track.info.title}</h5>
 				{#if !player?.playing?.nothingPlaying}
-					<Tooltip triggeredBy="#track">{player.playing.track.title}</Tooltip>
+					<Tooltip triggeredBy="#track">{player.playing.track.info.title}</Tooltip>
 					<p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">
-						{player.playing.track.author}
+						{player.playing.track.info.author}
 					</p>
 					<div class="flex flex-row items-center space-x-4">
 						<Avatar src={player.playing.track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${player.playing.track.requesterId}/${player.playing.track.requesterAvatar}.png` : ''}>{getInitials(player.playing.track.requesterTag)}</Avatar>
 						<div class="grow space-y-1 font-medium dark:text-white truncate">
 							<div class="truncate">{player.playing.track.requesterTag}</div>
 						</div>
-						<Button color="blue" href={player.playing.track.uri} target="_blank">
+						<Button color="blue" href={player.playing.track.info.uri} target="_blank">
 							<ArrowTopRightOnSquare class="w-5 h-5 mr-2"></ArrowTopRightOnSquare>
 							Link
 						</Button>
@@ -384,7 +384,7 @@
 				{#if player.textChannel && player.channel && !player.playing.nothingPlaying}
 					<div class="flex flex-col mt-4">
 						<div class="inline-flex items-center">
-							{#if !player.playing.track?.isStream || player.playing.nothingPlaying}
+							{#if !player.playing.track?.info.isStream || player.playing.nothingPlaying}
 								{msToTimeString(msToTime(position * 1000), true)}
 							{:else}
 								<Badge color="red">
@@ -392,8 +392,8 @@
 									Live
 								</Badge>
 							{/if}
-							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.track?.isStream ? 100 : player.playing.duration / 1000} value={player.playing.track?.isStream ? 100 : position} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />
-							{#if !player.playing.track?.isStream || player.playing.nothingPlaying}
+							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.info.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : player.playing.duration / 1000} value={player.playing.track?.info.isStream ? 100 : position} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout || player.paused} />
+							{#if !player.playing.track?.info.isStream || player.playing.nothingPlaying}
 								{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : player.playing.duration), true)}
 							{/if}
 						</div>
@@ -508,10 +508,10 @@
 									<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
 									<div class="flex-1 min-w-0">
 										<p class="text-sm font-medium text-gray-900 truncate dark:text-white">
-											{track.title}
+											{track.info.title}
 										</p>
 										<p class="text-sm text-gray-500 truncate dark:text-gray-400">
-											{track.author}
+											{track.info.author}
 										</p>
 										<Badge color="dark" class="mt-1 mr-1">
 											<Hashtag class="mr-1 w-3 h-3" variation="solid"></Hashtag>
@@ -521,7 +521,7 @@
 											<User class="mr-1 w-3 h-3" variation="solid"></User>
 											{track.requesterTag}
 										</Badge>
-										{#if track.isStream}
+										{#if track.info.isStream}
 											<Badge color="red">
 												<Signal class="mr-1 w-3 h-3" variation="solid"></Signal>
 												Live
@@ -529,7 +529,7 @@
 										{:else}
 											<Badge color="dark">
 												<Clock class="mr-1 w-3 h-3" variation="solid"></Clock>
-												{msToTimeString(msToTime(track.length), true)}
+												{msToTimeString(msToTime(track.info.length), true)}
 											</Badge>
 										{/if}
 									</div>
@@ -541,7 +541,7 @@
 													Remove{track.requesterId !== user.id ? ' forcefully' : ''}
 												</Button>
 											{/if}
-											<Button color="blue" href={track.uri} target="_blank">
+											<Button color="blue" href={track.info.uri} target="_blank">
 												<ArrowTopRightOnSquare class="w-5 h-5 mr-2"></ArrowTopRightOnSquare>
 												Link
 											</Button>
