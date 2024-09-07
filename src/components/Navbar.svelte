@@ -5,7 +5,7 @@
     import { managerMode } from '$lib/stores';
     import { getInitials, preload, signout, type WebUser } from '$lib/util';
     import { Avatar, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand, Toggle } from 'flowbite-svelte';
-    
+
     export let user: WebUser;
 </script>
 
@@ -23,10 +23,10 @@
     <div class="flex md:order-2">
         <DarkMode class="mr-2" />
         {#await preload(user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : '') then source}
-            <Avatar id="avatar-menu" class="cursor-pointer" src={source}> {getInitials(user.username)} </Avatar>        
+            <Avatar id="avatar-menu" class="cursor-pointer" src={source}> {getInitials(user.username)} </Avatar>
             <Dropdown placement="bottom" triggeredBy="#avatar-menu">
                 <DropdownHeader>
-                    <span class="block text-sm"> {user.username}#{user.discriminator} </span>
+                    <span class="block text-sm"> {user.username}{user.discriminator !== '0' ? user.discriminator : ''} </span>
                 </DropdownHeader>
                 {#if user.manager}
                     <DropdownItem class="cursor-default">
