@@ -1,5 +1,5 @@
 <svelte:head>
-    <title>Manage {guild?.name ?? 'Server'} | Quaver</title> 
+    <title>Manage {guild?.name ?? 'Server'} | Quaver</title>
 </svelte:head>
 
 <script lang="ts">
@@ -371,7 +371,7 @@
 						{player.playing.track.author}
 					</p>
 					<div class="flex flex-row items-center space-x-4">
-						<Avatar src={player.playing.track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${player.playing.track.requester}/${player.playing.track.requesterAvatar}.png` : ''}>{getInitials(player.playing.track.requesterTag)}</Avatar>
+						<Avatar src={player.playing.track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${player.playing.track.requesterId}/${player.playing.track.requesterAvatar}.png` : ''}>{getInitials(player.playing.track.requesterTag)}</Avatar>
 						<div class="grow space-y-1 font-medium dark:text-white truncate">
 							<div class="truncate">{player.playing.track.requesterTag}</div>
 						</div>
@@ -392,7 +392,7 @@
 									Live
 								</Badge>
 							{/if}
-							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.track?.isStream ? 100 : player.playing.duration / 1000} value={player.playing.track?.isStream ? 100 : position} disabled={(player.playing.track?.requester !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />					
+							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.track?.isStream ? 100 : player.playing.duration / 1000} value={player.playing.track?.isStream ? 100 : position} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.isStream || player.pauseTimeout || player.paused} />
 							{#if !player.playing.track?.isStream || player.playing.nothingPlaying}
 								{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : player.playing.duration), true)}
 							{/if}
@@ -477,7 +477,7 @@
 					{:else if !player?.connected}
 						<ChevronDoubleRight class="w-5 h-5"></ChevronDoubleRight>
 					{:else}
-						<Plus class="w-5 h-5"></Plus>						
+						<Plus class="w-5 h-5"></Plus>
 					{/if}
 				</Button>
 			</form>
@@ -505,7 +505,7 @@
 						{#each paginatedQueue[page - 1] as track}
 							<ListgroupItem>
 								<div class="flex items-center space-x-4">
-									<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requester}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
+									<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
 									<div class="flex-1 min-w-0">
 										<p class="text-sm font-medium text-gray-900 truncate dark:text-white">
 											{track.title}
@@ -535,10 +535,10 @@
 									</div>
 									<div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
 										<ButtonGroup>
-											{#if track.requester === user.id || (Number(guild?.permissions ?? 0) & 0x20) !== 0 || $managerMode}
+											{#if track.requesterId === user.id || (Number(guild?.permissions ?? 0) & 0x20) !== 0 || $managerMode}
 												<Button color="red" on:click={() => update('remove', player.queue.indexOf(track))}>
 													<XMark class="w-5 h-5 mr-2"></XMark>
-													Remove{track.requester !== user.id ? ' forcefully' : ''}
+													Remove{track.requesterId !== user.id ? ' forcefully' : ''}
 												</Button>
 											{/if}
 											<Button color="blue" href={track.uri} target="_blank">
