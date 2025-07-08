@@ -578,7 +578,7 @@
 				<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 					<SearchOutline class="text-500 w-4.5 h-4.5" />
 				</div>
-				<input bind:value={queueSearchValue} type="search" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
+				<input bind:value={queueSearchValue} type="text" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
 					<div class="h-4/7 w-0.5 background-300"></div>
