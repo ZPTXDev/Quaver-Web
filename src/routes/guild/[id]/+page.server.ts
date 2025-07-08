@@ -6,13 +6,13 @@ export const load = (async ({ cookies, params }) => {
 	if (!cookies.get('token')) {
 		cookies.set('redirect', params.id, {
 			path: '/',
-			secure: env.PRIVATE_SECURE?.toLowerCase() === 'true' ?? false
+			secure: env.PRIVATE_SECURE?.toLowerCase() === 'true',
 		});
-		throw redirect(307, '/');
+		redirect(307, '/');
 	}
 	cookies.delete('redirect', {
 		path: '/',
-		secure: env.PRIVATE_SECURE?.toLowerCase() === 'true' ?? false
+		secure: env.PRIVATE_SECURE?.toLowerCase() === 'true',
 	});
 	return { token: cookies.get('token'), guildId: params.id };
 }) satisfies PageServerLoad;

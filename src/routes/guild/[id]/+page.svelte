@@ -1,313 +1,511 @@
 <svelte:head>
-    <title>Manage {guild?.name ?? 'Server'} | Quaver</title>
+	<title>{guild.name ?? "Loading..."} | Quaver</title>
 </svelte:head>
 
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { Footer, Navbar, PendingAction, PromoDrawer } from '$components';
-	import { env } from '$env/dynamic/public';
-	import { featureMap, managerMode, manualLoading, socket } from '$lib/stores';
-	import { fetchGuilds, fetchUser, getInitials, join, request, signout, type WebGuild, type WebUser } from '$lib/util';
-	import { msToTime, msToTimeString, paginate } from '@zptxdev/zptx-lib';
-	import { Avatar, Badge, Breadcrumb, BreadcrumbItem, Button, ButtonGroup, Card, CardPlaceholder, ChevronLeft, ChevronRight, Heading, InformationCircle, Input, Li, List, Listgroup, ListgroupItem, Pagination, Range, Search, Select, Spinner, Toast, Toggle, Tooltip } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
-	import { ArrowPathRoundedSquare, ArrowTopRightOnSquare, ArrowsRightLeft, CheckCircle, ChevronDoubleRight, Clock, EllipsisHorizontalCircle, ExclamationTriangle, Forward, Hashtag, MagnifyingGlass, Pause, Play, Plus, Signal, SpeakerWave, SpeakerXMark, User, XMark } from 'svelte-heros-v2';
-	import { ToastContainer, toasts } from 'svelte-toasts';
+	import { state as states } from '$lib/states.svelte';
+	import { goto } from '$app/navigation';
+	import {
+		fetchGuilds,
+		fetchUser,
+		friendlyTimeString, getInitials,
+		hasManageServerPermissions as hasManageServerPermissionsUtil,
+		join,
+		request,
+		signout,
+		type WebGuild,
+		type WebUser
+	} from '$lib/util';
+	import { featureMap, initialWebUserState } from '$lib/constants';
 	import type { PageData } from './$types';
+	import { env } from '$env/dynamic/public';
+	import { Navbar, TrackCard } from '$components';
+	import { Pause, Play, Snooze } from '$components/icons';
+	import { Avatar, Checkbox, Dropdown, DropdownDivider, DropdownGroup, DropdownHeader, DropdownItem, Toggle, Tooltip } from 'flowbite-svelte';
+	import {
+		AdjustmentsVerticalOutline,
+		AngleRightOutline,
+		ArrowsRepeatOutline,
+		ArrowsRepeatCountOutline,
+		BackwardStepSolid,
+		CloseOutline,
+		ForwardStepSolid,
+		ListMusicOutline,
+		MusicOutline,
+		ShuffleOutline,
+		VolumeDownOutline,
+		VolumeMuteOutline,
+		VolumeUpOutline, SearchOutline
+	} from 'flowbite-svelte-icons';
+	import { msToTime, msToTimeString } from '@zptxdev/zptx-lib';
+	import RangeSlider from 'svelte-range-slider-pips';
+	import { SvelteDate } from 'svelte/reactivity';
+	import ColorThief from 'colorthief';
+	import chroma from 'chroma-js';
 
-	export let data: PageData;
-	let player: any = {
+	let { data }: { data: PageData } = $props();
+	const colorThief = new ColorThief();
+	let positionUpdateInterval: any;
+	let date = new SvelteDate();
+	let guild: WebGuild = $state({} as WebGuild);
+	let user: WebUser = $state(initialWebUserState);
+	let addTrackLoading = $state(false);
+	let addTrackValue = $state('');
+	let queueSearchValue = $state('');
+	let queueSearchFilterIds = $state([] as string[]);
+	let player: any = $state({
 		connected: false,
 		playing: {
 			nothingPlaying: true,
 		},
+		paused: true,
 		loop: 0,
-	};
-	let user: WebUser = {
-		id: '',
-		username: '',
-		discriminator: '',
-		avatar: '',
-		manager: false,
-	};
-	let guild: WebGuild = {} as WebGuild;
-	let settings: any = {};
-	let queue: any[] = [];
-	let page = 1;
-	let value = '';
-	let identifier = '';
-	let promoHidden = true;
-	let updatePosition = true;
-	let updateVolume = true;
-	let perPage = 5;
-	let addingTrack = false;
+		volume: 100,
+	});
+	let settings: any = $state({});
+	let position = $state({
+		current: 0,
+		lastKnown: 0,
+		dragging: false,
+	});
+	let currentVolume = $state(-1);
+	let lyrics = $state({
+		noHits: false,
+		loading: false,
+		text: [] as { text: string, time: number }[],
+		artist: '',
+		album: '',
+		title: '',
+		duration: 0,
+		lastScrolledElementId: '',
+		color: {
+			bg: '',
+			text: '',
+		},
+	});
+	let loading = $state(true);
 
-	$: player;
-	$: user;
-	$: version = '';
-	$: guild;
-	$: settings;
-	$: paginatedQueue = paginate(queue, perPage);
-	$: pages = paginatedQueue.map((_, index) => index + 1).filter((pageNumber) => (page <= 2 ? pageNumber >= 1 && pageNumber <= 5 : (page >= paginatedQueue.length - 2 ? pageNumber >= paginatedQueue.length - 4 && pageNumber <= paginatedQueue.length : pageNumber >= page - 2 && pageNumber <= page + 2))).map(name => ({ name, active: page === name }));
-	$: position = 0;
-	$: volume = 100;
+	let inactiveLessTimeouts = $derived(!player.connected || player.playing?.nothingPlaying);
+	let hasTimeout = $derived(player.timeout || player.pauseTimeout);
+	let inactive = $derived(inactiveLessTimeouts || hasTimeout);
+	let inVoiceChannel = $derived(player.connected && player.channel && player.textChannel);
+	let leavingInMs = $derived((player.timeout || player.pauseTimeout) - date.getTime());
+	let leavingIn = $derived(friendlyTimeString(msToTime(leavingInMs)));
+	let hasManageServerPermissions = $derived(hasManageServerPermissionsUtil(guild?.permissions));
+	let hasTrackPermissions = $derived(
+		player.playing.track?.requesterId === user.id
+		|| hasManageServerPermissions
+	);
+	let hasVoteSkipped = $derived(!inactive && player.playing.skip?.users?.includes(user.id))
+	let volume = $derived(player.volume);
+	let queue: any[] = $derived(player.queue ?? []);
+	let lyricsMetaMatchesTrack = $derived(
+		player.playing.track?.info.title === lyrics.title
+		&& player.playing.track?.info.author === lyrics.artist
+		&& player.playing.track?.pluginInfo?.albumName === lyrics.album
+		&& Math.round(player.playing.track?.info.length / 1000) === lyrics.duration,
+	);
+	let lyricsExistsForTrack = $derived(
+		lyrics.text.length > 0
+		&& lyricsMetaMatchesTrack,
+	);
+	let uniqueRequesterTracks = $derived(
+		queue.filter((value, index, self) =>
+			self.findIndex(v => v.requesterId === value.requesterId) === index),
+	);
 
-	const previous = () => {
-		if (page > 1) page -= 1;
-	};
-	const next = () => {
-		if (page < paginatedQueue.length) page += 1;
-	};
-	const click = (event: Event) => {
-		if (!event.target || !(event.target instanceof HTMLButtonElement)) return;
-		page = parseInt(event.target.innerText);
-	};
-	const search = (query: string) => {
-		let tempQueue = [];
-		if (query.length > 0) {
-			tempQueue = queue.filter((track: { info: { title: string } }) => track.info.title?.toLowerCase().includes(query.toLowerCase()));
+	function queueSearchFilterUpdated(event: Event) {
+		if (!(event.target instanceof HTMLInputElement)) return;
+		const value = event.target.value;
+		if (event.target.checked) {
+			queueSearchFilterIds.push(value);
 		} else {
-			tempQueue = queue;
+			const index = queueSearchFilterIds.indexOf(value);
+			if (index > -1) {
+				queueSearchFilterIds.splice(index, 1);
+			}
 		}
-		paginatedQueue = paginate(tempQueue, perPage);
-		page = 1;
-	};
-
-	function preload(src: string): Promise<string> {
-		if (src === '') return Promise.resolve('');
-		src = `https://img.youtube.com/vi/${src}/maxresdefault.jpg`;
-		return new Promise(resolve => {
-			let img = new Image();
-			img.onload = () => {
-				if (img.naturalWidth === 120) {
-					resolve(src.replace('maxresdefault', 'hqdefault'));
-					return;
+	}
+	async function getLyrics() {
+		if (inactiveLessTimeouts || player.playing.track?.info.isStream) return;
+		if (lyrics.loading || lyricsExistsForTrack || lyricsMetaMatchesTrack && lyrics.noHits) return;
+		lyrics.loading = true;
+		lyrics.noHits = false;
+		lyrics.artist = player.playing.track?.info.author;
+		lyrics.album = player.playing.track?.pluginInfo?.albumName;
+		lyrics.title = player.playing.track?.info.title;
+		lyrics.duration = Math.round(player.playing.track?.info.length / 1000);
+		const LYRICS_URL = `https://lrclib.net/api/get?track_name=${encodeURIComponent(player.playing.track?.info.title)}&artist_name=${encodeURIComponent(player.playing.track?.info.author)}&album_name=${encodeURIComponent(player.playing.track?.pluginInfo?.albumName ?? '')}&duration=${Math.round(player.playing.track?.info?.length / 1000)}`;
+		try {
+			const response = await fetch(LYRICS_URL);
+			if (!response.ok) {
+				lyrics.noHits = true;
+				lyrics.loading = false;
+				return;
+			}
+			const data = await response.json();
+			if (data.code) {
+				lyrics.noHits = true;
+				if (data.code !== 404) console.error('Error fetching lyrics:', data);
+				lyrics.loading = false;
+				return;
+			}
+			if (data?.syncedLyrics || data.plainLyrics) {
+				lyrics.lastScrolledElementId = '';
+				if (data.syncedLyrics) {
+					lyrics.text = data.syncedLyrics.trimEnd().split('\n').map((line: string) => {
+						const match = line.trimEnd().match(/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?]\s*(.*)$/);
+						if (match) {
+							const minutes = parseInt(match[1], 10);
+							const seconds = parseInt(match[2], 10);
+							const milliseconds = match[3] ? parseInt(match[3], 10) : 0;
+							return {
+								text: match[4],
+								time: (minutes * 60 + seconds) * 1000 + milliseconds,
+							};
+						}
+						return { text: line, time: 0 };
+					});
+				} else {
+					lyrics.text = data.plainLyrics.trimEnd().split('\n').map((line: string) => ({
+						text: line.trimEnd(),
+						time: 0,
+					}));
 				}
-				else {
-					resolve(src);
-				}
-			};
-			img.src = src;
+			} else {
+				lyrics.noHits = true;
+			}
+		} catch (error) {
+			console.error('Error fetching lyrics:', error);
+			lyrics.noHits = true;
+		} finally {
+			lyrics.loading = false;
+		}
+	}
+	function lyricLineColor(line: { text: string, time: number }): string {
+		if (!lyrics.text || lyrics.text.length === 0) return 'text-500';
+		const nextLine: { text: string, time: number } | undefined = lyrics.text.find((l: { text: string, time: number }) => l.time > line.time);
+		if (!nextLine || position.current >= line.time && position.current < nextLine.time) {
+			return 'opacity-100';
+		} else if (position.current >= line.time) {
+			return 'opacity-40';
+		}
+		return 'opacity-60';
+	}
+	async function artworkImgLoaded(event: Event) {
+		if (!(event.target instanceof HTMLImageElement)) return;
+		const img = event.target;
+		if (!img.complete) return;
+		const color = colorThief.getColor(img);
+		const chromaColor = chroma(color);
+		const blackContrast = chroma.contrastAPCA('black', chromaColor);
+		const whiteContrast = chroma.contrastAPCA('white', chromaColor);
+		lyrics.color.bg = `background-color: ${chromaColor.hex()}`;
+		if (blackContrast >= 45) {
+			lyrics.color.text = 'color: black';
+			return;
+		}
+		if (whiteContrast <= -45) {
+			lyrics.color.text = 'color: white';
+			return;
+		}
+		lyrics.color.text = `color: ${blackContrast - 106 > whiteContrast - -108 ? 'black' : 'white'}`;
+	}
+	function addTrack(event: SubmitEvent) {
+		if (!(event.target instanceof HTMLFormElement) || !(event.target[0] instanceof HTMLInputElement)) return;
+		const value = event.target[0].value;
+		if (addTrackLoading || !value) return;
+		addTrackLoading = true;
+		states.socket.emit('update', [guild.id, { type: 'add', value }], (response: { status: string }) => {
+			if (response.status === 'success') addTrackValue = '';
+			addTrackLoading = false;
 		});
 	}
-	function getQueueDuration(queue: any[]) {
-		return msToTimeString(msToTime(queue.filter(track => !track.info.isStream).map(track => track.info.length).reduce((acc, a) => acc + a, 0)), true);
+	function pausePlayPlayer() {
+		if (inactive) return;
+		player.paused = !player.paused;
+		states.socket.emit('update', [guild.id, { type: 'paused', value: player.paused }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				player.paused = !player.paused; // revert the pause state
+				return;
+			}
+		});
 	}
-	function settingsToggled(event: Event) {
+	function shuffle() {
+		if (inactive || queue.length <= 1) return;
+		states.socket.emit('update', [guild.id, { type: 'shuffle' }], (response: { status: string }) => {
+			if (response.status !== 'success') return;
+		});
+	}
+	function rewind() {
+		if ((player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		position.dragging = true;
+		position.current = 0;
+		if (player.connected && !player.playing?.nothingPlaying) {
+			states.socket.emit('update', [guild.id, { type: 'seek', value: 0 }], (response: { status: string }) => {
+				if (response.status !== 'success') {
+					position.current = position.lastKnown;
+					position.dragging = false;
+					return;
+				}
+				position.lastKnown = position.current;
+				position.dragging = false;
+			});
+		}
+	}
+	function skip() {
+		if (hasVoteSkipped) return;
+		states.socket.emit('update', [guild.id, { type: 'skip' }], (response: { status: string }) => {
+			if (response.status !== 'success') return;
+		});
+	}
+	function loop() {
+		if (inactive) return;
+		player.loop = (player.loop + 1) % 3;
+		states.socket.emit('update', [guild.id, { type: 'loop', value: player.loop }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				player.loop = (player.loop - 1 + 3) % 3; // revert the loop state
+				return;
+			}
+		});
+	}
+	function mute() {
+		if (!inVoiceChannel) return;
+		currentVolume = player.volume === 0 ? 100 : 0
+		states.socket.emit('update', [guild.id, { type: 'volume', value: currentVolume }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				currentVolume = -1;
+				return;
+			}
+			player.volume = currentVolume;
+			currentVolume = -1;
+		});
+	}
+	function bassboostToggle() {
+		if (inactive) return;
+		player.filters.bassboost = !player.filters.bassboost;
+		states.socket.emit('update', [guild.id, { type: 'bassboost', value: player.filters.bassboost }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				player.filters.bassboost = !player.filters.bassboost; // revert the bassboost state
+				return;
+			}
+		});
+	}
+	function nightcoreToggle() {
+		if (inactive) return;
+		player.filters.nightcore = !player.filters.nightcore;
+		states.socket.emit('update', [guild.id, { type: 'nightcore', value: player.filters.nightcore }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				player.filters.nightcore = !player.filters.nightcore; // revert the nightcore state
+				return;
+			}
+		});
+	}
+	function settingsToggle(event: Event) {
 		if (!event.target || !(event.target instanceof HTMLInputElement)) return;
 		const enabled = event.target.checked;
 		const id = event.target.id;
 		if (enabled && !settings[id].whitelisted) {
-			promoHidden = false;
 			event.target.checked = false;
 			return;
 		}
-		$socket.emit('update', [
-			guild.id,
-			{
-				type: `${$featureMap[id].id}Feature`,
-				value: enabled
-			}
-		], (r: { status: string }) => {
-			if (r.status !== 'success' && event.target instanceof HTMLInputElement) {
-				event.target.checked = !enabled;
-				switch (r.status) {
-					case 'error-auth':
-						toasts.error('You do not have permission to perform that action.');
-						return;
-					case 'error-generic':
-						toasts.error('Something went wrong.');
-						return;
-					case 'error-channel-mismatch':
-						toasts.error('You are not in the same channel as Quaver.');
-						return;
-					case 'error-inactive-session':
-						toasts.error('There is no active session.');
-						return;
-					case 'error-feature-disabled':
-						toasts.error('This feature is currently disabled.');
-						return;
-					case 'error-feature-not-whitelisted':
-						toasts.error('You do not have permission to use this feature.');
-						return;
-				}
+		states.socket.emit('update', [guild.id, { type: `${featureMap[id].id}Feature`, value: enabled }], (response: { status: string }) => {
+			if (response.status !== 'success' && event.target instanceof HTMLInputElement) {
+				event.target.checked = settings[id].enabled;
 				return;
 			}
-			toasts.success('Successfully updated settings.');
+			settings[id].enabled = enabled;
 		});
 	}
-	function updatePositionFromInput(event: Event) {
-		if (!event.target || !(event.target instanceof HTMLInputElement)) return;
-		position = parseInt(event.target.value);
+	function positionFormatter(value: number): string {
+		return msToTimeString(msToTime(value), true);
 	}
-	function updateVolumeFromInput(event: Event) {
-		if (!event.target || !(event.target instanceof HTMLInputElement)) return;
-		volume = parseInt(event.target.value);
+	function getPosition(playing: any): number {
+		return playing.nothingPlaying ? 0 : playing.elapsed;
 	}
-	function updatePerPage(event: Event) {
-		if (!event.target || !(event.target instanceof HTMLSelectElement)) return;
-		perPage = parseInt(event.target.value);
-		paginatedQueue = paginate(queue, perPage);
-		page = 1;
+	function positionUpdateIntervalFn() {
+		if (!inactive && !position.dragging) {
+			position.current += 1000;
+		}
 	}
-	function update(type: string, value?: any) {
-		$socket.emit('update', [guild.id, { type, value }], (r: { status: string }) => {
-			switch (r.status) {
-				case 'error-auth':
-					toasts.error('You do not have permission to perform that action.');
+	function positionDragStarted(event: any) {
+		position.dragging = true;
+		position.current = parseInt(event.detail.value);
+	}
+	function positionDragChanged(event: any) {
+		position.dragging = true;
+		position.current = parseInt(event.detail.value);
+	}
+	function positionDragStopped(event: any) {
+		position.dragging = true;
+		position.current = parseInt(event.detail.value);
+		if (player.connected && !player.playing?.nothingPlaying) {
+			states.socket.emit('update', [guild.id, { type: 'seek', value: parseInt(event.detail.value) }], (response: { status: string }) => {
+				if (response.status !== 'success') {
+					position.current = position.lastKnown;
+					position.dragging = false;
 					return;
-				case 'error-generic':
-					toasts.error('Something went wrong.');
-					return;
-				case 'error-channel-mismatch':
-					toasts.error('You are not in the same channel as Quaver.');
-					return;
-				case 'error-inactive-session':
-					toasts.error('There is no active session.');
-					return;
-				case 'error-feature-disabled':
-					toasts.error('This feature is currently disabled.');
-					return;
-				case 'error-feature-not-whitelisted':
-					toasts.error('You do not have permission to use this feature.');
-					return;
+				}
+				position.lastKnown = position.current;
+				position.dragging = false;
+			});
+		}
+	}
+	function volumeFormatter(value: number): string {
+		return `${value}%`;
+	}
+	function volumeDragStarted(event: any) {
+		currentVolume = parseInt(event.detail.value);
+	}
+	function volumeDragChanged(event: any) {
+		currentVolume = parseInt(event.detail.value);
+	}
+	function volumeDragStopped(event: any) {
+		currentVolume = parseInt(event.detail.value);
+		states.socket.emit('update', [guild.id, { type: 'volume', value: parseInt(event.detail.value) }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				player.volume = parseInt(event.detail.startValue);
+				currentVolume = -1;
+				return;
 			}
-			switch (type) {
-				case 'bassboost':
-				case 'nightcore':
-					toasts.info('Filters may take a few seconds to apply.');
-					break;
-				case 'remove':
-					toasts.success('Successfully removed track.');
-					break;
-			}
+			player.volume = parseInt(event.detail.value);
+			currentVolume = -1;
 		});
 	}
-	function addTrack(value: string, target: any) {
-		if (addingTrack || !value) return;
-		addingTrack = true;
-		$socket.emit('update', [guild.id, { type: 'add', value }], (r: { status: string }) => {
-			switch (r.status) {
-				case 'error-generic':
-					toasts.error('Something went wrong.');
-					break;
-				case 'error-auth':
-					toasts.error('You do not have permission to perform that action.');
-					break;
-				case 'error-bot-permission':
-					toasts.error('Quaver does not have permission to connect to or speak in your voice channel.');
-					break;
-				case 'error-bot-timed-out':
-					toasts.error('Quaver is timed out in your server.');
-					break;
-				case 'error-feature-disabled':
-					toasts.error('Adding songs from Spotify is currently disabled.');
-					break;
-				case 'error-no-results':
-					toasts.error('No results found.');
-					break;
-				case 'error-spotify-too-many-tracks':
-					toasts.error('You can only add up to 500 tracks at a time from Spotify.');
-					break;
-				case 'error-user-not-in-channel':
-					if (player?.connected) {
-						toasts.error('You need to be in my voice channel.');
-					}
-					else {
-						toasts.error('You need to be in a voice channel.');
-					}
-					break;
-				case 'success':
-					toasts.success('Successfully added track(s).');
-					target.value = '';
-					break;
-				default:
-					toasts.error('Something went wrong.');
-					break;
-			}
-			addingTrack = false;
+	function scrollChildIntoView(container: HTMLElement, target: HTMLElement) {
+		const containerRect = container.getBoundingClientRect();
+		const targetRect = target.getBoundingClientRect();
+
+		const containerScrollTop = container.scrollTop;
+		const targetOffsetTop = targetRect.top - containerRect.top;
+
+		const offsetToCenter =
+			targetOffsetTop - (containerRect.height / 2) + (targetRect.height / 2);
+
+		container.scrollTo({
+			top: containerScrollTop + offsetToCenter,
+			behavior: 'smooth'
 		});
 	}
 
+	$effect(() => {
+		const interval = setInterval(() => {
+			date.setTime(Date.now());
+			if (!inactive && !position.dragging && lyricsExistsForTrack) {
+				const currentTime = position.current;
+				lyrics.text.forEach((line, index) => {
+					const nextLine = lyrics.text[index + 1];
+					if (index !== 0 && line.time === 0) return;
+					if (nextLine && currentTime >= line.time && currentTime < nextLine.time && lyrics.lastScrolledElementId !== `lyricline-${index}`) {
+						const lyricsContainer = document.getElementById('lyrics');
+						const lyricElement = document.getElementById(`lyricline-${index}`);
+						if (lyricsContainer && lyricElement) {
+							// lyricElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							scrollChildIntoView(lyricsContainer, lyricElement);
+							lyrics.lastScrolledElementId = `lyricline-${index}`;
+						}
+					}
+				});
+			}
+		}, 100);
+
+		return () => {
+			clearInterval(interval);
+		};
+	});
+
 	onMount(async () => {
-		if (!$socket.connected) {
-			goto('/');
-			return;
+		if (!states.socket.connected) {
+			return goto(`/?guild_id=${data.guildId}`);
 		}
 		try {
-			({ user, version } = await fetchUser($socket, data.token as string));
-			let { guilds } = await fetchGuilds($socket, data.token as string);
-			if (!guilds) guilds = [];
-			if (!guilds.some((g) => g.id === data.guildId)) {
-				goto('/dashboard');
-				return;
-			};
+			({ user } = await fetchUser(states.socket, data.token as string));
+			states.manualLoading = false;
+			let { guilds } = await fetchGuilds(states.socket, data.token as string);
+			if (!guilds?.some((g) => g.id === data.guildId)) {
+				return goto('/dashboard');
+			}
 			guild = guilds.find((g) => g.id === data.guildId) as WebGuild;
 			if (!guild.botInGuild) {
 				if ((Number(guild.permissions) & 0x20) !== 0) {
-					goto(
+					return goto(
 						`https://discord.com/api/oauth2/authorize?client_id=${env.PUBLIC_DISCORD_CLIENT_ID}&redirect_uri=${location.origin}&response_type=code&scope=applications.commands%20bot&permissions=3459072&guild_id=${data.guildId}`
 					);
-					return;
 				}
-				goto('/dashboard');
-				return;
+				return goto('/dashboard');
 			}
-			await join($socket, guild.id);
-			const p = await request($socket, guild.id, 'player');
+			await join(states.socket, data.guildId);
+			const p = await request(states.socket, guild.id, 'player');
 			if (p.response !== null) player = p.response;
-			identifier = !player.playing?.nothingPlaying && player.playing.track?.info.sourceName === 'youtube' && player.playing.track.info.identifier ? player.playing.track.info.identifier : '';
-			position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-			volume = player.volume;
-			queue = player.queue ?? [];
-			const s = await request($socket, guild.id, 'settings');
+			const s = await request(states.socket, guild.id, 'settings');
 			if (s.response) settings = s.response;
-			$manualLoading = false;
+			loading = false;
 		}
 		catch (error) {
 			await signout();
-			goto('/');
+			return goto('/');
 		}
 		finally {
-			$socket.on('intervalTrackUpdate', playing => {
+			if (!player.playing?.nothingPlaying) {
+				position.current = getPosition(player.playing);
+				position.lastKnown = position.current;
+				if (!player.paused) {
+					clearInterval(positionUpdateInterval);
+					positionUpdateInterval = setInterval(positionUpdateIntervalFn, 1000);
+				}
+				await getLyrics();
+			}
+			states.socket.on('intervalTrackUpdate', playing => {
 				player.playing = playing;
-				identifier = !player.playing?.nothingPlaying && player.playing.track?.info.sourceName === 'youtube' && player.playing.track.info.identifier ? player.playing.track.info.identifier : '';
 				player.connected = true;
-				if (updatePosition) position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-				if (updateVolume) volume = player.volume;
+				if (!position.dragging && !player.paused && (position.lastKnown !== getPosition(playing) || position.lastKnown > position.current)) {
+					position.current = getPosition(playing);
+					position.lastKnown = position.current;
+					clearInterval(positionUpdateInterval);
+					positionUpdateInterval = setInterval(positionUpdateIntervalFn, 1000);
+				} else if (position.dragging) {
+					position.lastKnown = getPosition(playing);
+				}
+				getLyrics();
 			});
-			$socket.on('queueUpdate', q => {
+			states.socket.on('queueUpdate', q => {
 				player.queue = q;
-				queue = player.queue;
+				queueSearchFilterIds = queueSearchFilterIds.filter(id => uniqueRequesterTracks.some(track => track.requesterId === id));
 			});
-			$socket.on('filterUpdate', filters => {
+			states.socket.on('filterUpdate', filters => {
 				player.filters = filters;
 			});
-			$socket.on('loopUpdate', loop => {
+			states.socket.on('loopUpdate', loop => {
 				player.loop = loop;
 			});
-			$socket.on('pauseUpdate', paused => {
+			states.socket.on('pauseUpdate', paused => {
 				player.paused = paused;
+				if (paused) {
+					clearInterval(positionUpdateInterval);
+				} else {
+					position.lastKnown = getPosition(player.playing);
+					position.current = position.lastKnown;
+					clearInterval(positionUpdateInterval);
+					positionUpdateInterval = setInterval(positionUpdateIntervalFn, 1000);
+				}
 			});
-			$socket.on('volumeUpdate', vol => {
+			states.socket.on('volumeUpdate', vol => {
 				player.volume = vol;
-				if (updateVolume) volume = player.volume;
 			});
-			$socket.on('channelUpdate', channel => {
+			states.socket.on('channelUpdate', channel => {
 				player.channel = channel;
 			});
-			$socket.on('textChannelUpdate', textChannel => {
+			states.socket.on('textChannelUpdate', textChannel => {
 				player.textChannel = textChannel;
 			});
-			$socket.on('timeoutUpdate', timeout => {
-				if (player.timeout && !timeout) toasts.info('Resuming your session.');
+			states.socket.on('timeoutUpdate', timeout => {
 				player.timeout = timeout;
 			});
-			$socket.on('pauseTimeoutUpdate', pauseTimeout => {
-				if (player.pauseTimeout && !pauseTimeout) toasts.info('Resuming your session.');
+			states.socket.on('pauseTimeoutUpdate', pauseTimeout => {
 				player.pauseTimeout = pauseTimeout;
 			});
-			$socket.on('playerDisconnect', () => {
+			states.socket.on('playerDisconnect', () => {
 				player.queue = [];
 				player.volume = 100;
 				player.loop = 0;
@@ -319,257 +517,322 @@
 				player.connected = false;
 				player.channel = undefined;
 				player.textChannel = undefined;
-				identifier = '';
-				position = player.playing.nothingPlaying ? 0 : player.playing.elapsed / 1000;
-				volume = player.volume;
+				position.current = 0;
+				position.lastKnown = 0;
+				clearInterval(positionUpdateInterval);
 			});
-			$socket.on('stayFeatureUpdate', state => {
+			states.socket.on('stayFeatureUpdate', state => {
 				settings.stay.enabled = state.enabled;
 			});
-			$socket.on('autoLyricsFeatureUpdate', state => {
+			states.socket.on('autoLyricsFeatureUpdate', state => {
 				settings.autolyrics.enabled = state.enabled;
 			});
-			$socket.on('smartQueueFeatureUpdate', state => {
+			states.socket.on('smartQueueFeatureUpdate', state => {
 				settings.smartqueue.enabled = state.enabled;
 			});
 		}
 	});
 </script>
 
-<ToastContainer placement="bottom-left" let:data={data}>
-	<Toast simple color={data.type === 'success' ? 'green' : data.type === 'warning' ? 'yellow' : data.type === 'error' ? 'red' : 'blue'}>
-		<svelte:fragment slot="icon">
-			{#if data.type === 'error' || data.type === 'warning'}
-				<ExclamationTriangle class="w-6 h-6"></ExclamationTriangle>
-			{:else if data.type === 'success'}
-				<CheckCircle class="w-6 h-6"></CheckCircle>
-			{:else}
-				<InformationCircle class="w-6 h-6"></InformationCircle>
+{#snippet trackSearch(mobile = false)}
+	<div class="relative w-full md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}">
+		<form action="#" onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}>
+			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+				<MusicOutline class="z-10 text-500 w-4.5 h-4.5" />
+			</div>
+			<input bind:value={addTrackValue} type="text" placeholder="Add songs..." class="input-class" disabled={addTrackLoading}>
+			<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
+				<button type="reset">
+					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{addTrackValue ? '' : ' hidden'}" onclick={() => addTrackValue = ''} />
+				</button>
+				<div class="h-4/7 w-0.5 background-300"></div>
+				<button type="submit">
+					<AngleRightOutline class="text-500 w-4.5 h-full cursor-pointer" />
+				</button>
+			</div>
+		</form>
+	</div>
+{/snippet}
+{#snippet lyricLine(line: { text: string, time: number }, index: number)}
+	<span id="lyricline-{index}" class="transition-opacity {lyricLineColor(line)}">{line.text}</span>
+{/snippet}
+{#snippet volumeSlider(mobile = false)}
+	<button id="mute" class="transition {!inVoiceChannel ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 -mr-0.5" onclick={mute} disabled={!inVoiceChannel}>
+		{#if (currentVolume !== -1 ? currentVolume : volume) >= 50}
+			<VolumeUpOutline />
+		{:else if (currentVolume !== -1 ? currentVolume : volume) > 0}
+			<VolumeDownOutline />
+		{:else}
+			<VolumeMuteOutline />
+		{/if}
+	</button>
+	<RangeSlider class="{mobile ? 'w-full' : 'max-w-24 w-24'} text-[10px] slider" range="min" float formatter={volumeFormatter} min={0} max={100} value={currentVolume !== -1 ? currentVolume : volume} disabled={!inVoiceChannel} on:start={volumeDragStarted} on:change={volumeDragChanged} on:stop={volumeDragStopped} />
+{/snippet}
+{#snippet queuePanel()}
+	<div class="background-200 rounded-xl col-span-1 shadow-lg overflow-y-hidden max-md:aspect-square">
+		<div class="flex flex-col gap-4 p-8 pb-4">
+				<span class="text-900 font-semibold text-4xl">
+					Queue
+				</span>
+			<div class="relative">
+				<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+					<SearchOutline class="text-500 w-4.5 h-4.5" />
+				</div>
+				<input bind:value={queueSearchValue} type="search" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
+				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
+					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
+					<div class="h-4/7 w-0.5 background-300"></div>
+					<ListMusicOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer" />
+				</div>
+			</div>
+		</div>
+		<div class="flex flex-col gap-2 overflow-y-scroll pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)]">
+			{#if !player.playing?.nothingPlaying}
+				<TrackCard track={player.playing.track} position={0} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
 			{/if}
-		</svelte:fragment>
-		{data.description}
-	</Toast>
-</ToastContainer>
-<PromoDrawer bind:hidden={promoHidden} />
-<Navbar {user} />
-<div class="container mx-auto my-4">
-	<Breadcrumb>
-		<BreadcrumbItem href="/dashboard" on:click={event => {event.preventDefault(); goto('/dashboard');}} home>Home</BreadcrumbItem>
-		<BreadcrumbItem>{guild.name}</BreadcrumbItem>
-	</Breadcrumb>
-</div>
-<div class="container mx-auto flex flex-row flex-wrap lg:flex-nowrap gap-4">
-	<div class="w-full lg:w-1/4 space-y-4">
-		{#await preload(identifier)}
-			<CardPlaceholder />
-		{:then source}
-			<Card img={source} class="lg:max-w-sm !max-w-full">
-				<h5 id="track" class="{!player?.playing?.nothingPlaying ? 'mb-2 ' : ''}text-2xl font-bold tracking-tight text-gray-900 dark:text-white truncate">{player?.playing?.nothingPlaying ? player.connected ? 'Nothing playing' : 'Not in a voice channel' : player.playing.track.info.title}</h5>
-				{#if !player?.playing?.nothingPlaying}
-					<Tooltip triggeredBy="#track">{player.playing.track.info.title}</Tooltip>
-					<p class="mb-3 font-normal text-gray-700 dark:text-gray-400 leading-tight">
-						{player.playing.track.info.author}
-					</p>
-					<div class="flex flex-row items-center space-x-4">
-						<Avatar src={player.playing.track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${player.playing.track.requesterId}/${player.playing.track.requesterAvatar}.png` : ''}>{getInitials(player.playing.track.requesterTag)}</Avatar>
-						<div class="grow space-y-1 font-medium dark:text-white truncate">
-							<div class="truncate">{player.playing.track.requesterTag}</div>
-						</div>
-						<Button color="blue" href={player.playing.track.info.uri} target="_blank">
-							<ArrowTopRightOnSquare class="w-5 h-5 mr-2"></ArrowTopRightOnSquare>
-							Link
-						</Button>
-					</div>
+			{#each queue as track, i}
+				{#if (!queueSearchValue || (track.info.title.toLowerCase().includes(queueSearchValue.toLowerCase()) || track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase()))) && (queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))}
+					<TrackCard {track} position={i + 1} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
 				{/if}
-				{#if player.textChannel && player.channel && !player.playing.nothingPlaying}
-					<div class="flex flex-col mt-4">
-						<div class="inline-flex items-center">
-							{#if !player.playing.track?.info.isStream || player.playing.nothingPlaying}
-								{msToTimeString(msToTime(position * 1000), true)}
-							{:else}
-								<Badge color="red">
-									<Signal class="mr-1 w-3 h-3" variation="solid"></Signal>
-									Live
-								</Badge>
-							{/if}
-							<Range on:pointerdown={() => updatePosition = false} on:pointerup={() => {update('seek', position * 1000); updatePosition = true;}} on:input={updatePositionFromInput} class={player.playing.track?.info.isStream && !player.playing.nothingPlaying ? 'ml-2' : 'mx-2'} min={0} max={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : player.playing.duration / 1000} value={player.playing.track?.info.isStream ? 100 : position} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0 && !$managerMode) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout || player.paused} />
-							{#if !player.playing.track?.info.isStream || player.playing.nothingPlaying}
-								{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : player.playing.duration), true)}
-							{/if}
-						</div>
-						<ButtonGroup class="mt-4 justify-center mx-auto">
-							<Button disabled={!player.connected || player.pauseTimeout || player.playing.nothingPlaying} on:click={() => update('paused', !player.paused)}>
-								{#if player.paused}
-									<Play variation="solid" class="mr-2 -ml-1 w-5 h-5"></Play>
-									Play
-								{:else}
-									<Pause variation="solid" class="mr-2 -ml-1 w-5 h-5"></Pause>
-									Pause
-								{/if}
-							</Button>
-							<Button color={!player.playing.nothingPlaying && player.playing.skip?.users?.includes(user.id) ? 'green' : 'alternative'} on:click={() => update('skip')} disabled={!player.connected || player.pauseTimeout || player.playing.nothingPlaying || player.playing.skip?.users?.includes(user.id)}><Forward variation="solid" class="mr-2 -ml-1 w-5 h-5"></Forward>Skip{!player.playing.nothingPlaying && player.playing.skip?.users?.includes(user.id) ? `ping` : ''}{!player.playing.nothingPlaying && player.playing.skip ? ` (${player.playing.skip?.users.length}/${player.playing.skip?.required})` : ''}</Button>
-						</ButtonGroup>
-						<ButtonGroup class="mt-2 justify-center mx-auto">
-							<Button on:click={() => update('loop', player.loop - 1 < 0 ? 2 : player.loop - 1)} disabled={!player.connected || player.pauseTimeout} color={player.loop !== 0 ? 'green' : 'alternative'}>
-								<ArrowPathRoundedSquare variation="solid" class="mr-2 -ml-1 w-5 h-5"></ArrowPathRoundedSquare>
-								Loop{player.loop === 2 ? ' Track' : player.loop === 1 ? ' Queue' : ''}
-							</Button>
-							<Button on:click={() => update('shuffle')} disabled={!player.connected || player.pauseTimeout || player.queue.length < 2}>
-								<ArrowsRightLeft variation="solid" class="mr-2 -ml-1 w-5 h-5"></ArrowsRightLeft>
-								Shuffle
-							</Button>
-						</ButtonGroup>
-						<div class="inline-flex items-center justify-center mt-4">
-							{#if volume !== 0}
-								<SpeakerWave></SpeakerWave>
-							{:else}
-								<SpeakerXMark></SpeakerXMark>
-							{/if}
-							<Range on:pointerdown={() => updateVolume = false} on:pointerup={() => {update('volume', volume); updateVolume = true;}} on:input={updateVolumeFromInput} min={0} max={200} value={volume} class="mx-2 !w-2/5"></Range>
-						</div>
-					</div>
-				{/if}
-			</Card>
-		{/await}
-		<Card class="lg:max-w-sm !max-w-full">
-			{#if player.textChannel && player.channel}
-				<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Session</Heading>
-				<List tag="ul" class="mb-2 space-y-1" list="none">
-					<Li icon>
-						<Hashtag class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"></Hashtag>
-						{player.textChannel}
-					</Li>
-					<Li icon>
-						<SpeakerWave class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"></SpeakerWave>
-						{player.channel}
-					</Li>
-					{#if !settings?.stay?.enabled && (player.timeout || player.pauseTimeout)}
-						<Li icon>
-							<Clock class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"></Clock>
-							Leaving in {msToTimeString(msToTime((player.timeout || player.pauseTimeout) - Date.now()))}
-						</Li>
-					{/if}
-				</List>
-				<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Filters</Heading>
-				<Toggle class="cursor-pointer" checked={player.filters?.bassboost} on:change={() => update('bassboost', !player.filters?.bassboost)}>Bass Boost</Toggle>
-				<Toggle class="my-2 cursor-pointer" checked={player.filters?.nightcore} on:change={() => update('nightcore', !player.filters?.nightcore)}>Nightcore</Toggle>
-			{/if}
-			<Heading tag="h2" customSize="text-lg font-semibold" class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Settings</Heading>
-			{#each Object.keys(settings) as key, i}
-				<Toggle class={`${i !== 0 ? 'mt-2 ' : ''}${['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`} checked={settings[key].enabled} id={key} on:change={settingsToggled} disabled={['autolyrics', 'smartqueue'].includes(key) && (Number(guild?.permissions ?? 0) & 0x20) === 0}>{$featureMap[key].name}</Toggle>
 			{/each}
-		</Card>
+		</div>
 	</div>
-	<div class="w-full lg:w-3/4 h-min space-y-4">
-		<Card size="xl" padding="xl">
-			<h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white mb-4">
-				{#if !player?.connected}
-					Start a Session
-				{:else}
-					Add to Queue
-				{/if}
-			</h5>
-			<form class="flex gap-1" action="#" on:submit={event => {event.preventDefault(); addTrack(event.target[0].value, event.target[0]);}}>
-				<Input type="text" size="md" placeholder="YouTube search query or a link from Spotify or YouTube" disabled={addingTrack}></Input>
-				<Button type="submit" class="!p-2.5" disabled={addingTrack}>
-					{#if addingTrack}
-						<Spinner size="4" class="w-5 h-5" color="white"></Spinner>
-					{:else if !player?.connected}
-						<ChevronDoubleRight class="w-5 h-5"></ChevronDoubleRight>
-					{:else}
-						<Plus class="w-5 h-5"></Plus>
-					{/if}
-				</Button>
-			</form>
-		</Card>
-		<Card class={queue.length === 0 ? 'text-center items-center justify-center' : ''} size="xl" padding="xl">
-			{#if queue.length === 0}
-				<div class="py-24">
-					<PendingAction icon={EllipsisHorizontalCircle} title="Queue is empty" subtitle="Add some songs to get started!" />
-				</div>
-			{:else}
-				<div class="flex justify-between items-center mb-4">
-					<h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Queue</h5>
-					{player?.queue?.length ?? '0'} track{player?.queue?.length === 1 ? '' : 's'} • {getQueueDuration(player?.queue ?? [])}
-				</div>
-				<div class="container inline-flex mx-auto mb-2">
-					<Search size="md" bind:value on:input={e => search(value)}></Search>
-					<Select on:change={updatePerPage} class="ml-1 !w-1/12" placeholder="per page" value={perPage} items={[5, 10, 15, 20, 25].map(n => ({ value: n, name: n.toString() }))}></Select>
-				</div>
-				<Listgroup class="dark:!bg-transparent w-full">
-					{#if paginatedQueue.length === 0}
-						<div class="col-span-full text-center w-full p-8">
-							<PendingAction icon={MagnifyingGlass} title="No tracks found" subtitle="Try narrowing your search criteria." />
-						</div>
-					{:else}
-						{#each paginatedQueue[page - 1] as track}
-							<ListgroupItem>
-								<div class="flex items-center space-x-4">
-									<Avatar src={track.requesterAvatar ? `https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png` : ''} class="flex-shrink-0">{getInitials(track.requesterTag)}</Avatar>
-									<div class="flex-1 min-w-0">
-										<p class="text-sm font-medium text-gray-900 truncate dark:text-white">
-											{track.info.title}
-										</p>
-										<p class="text-sm text-gray-500 truncate dark:text-gray-400">
-											{track.info.author}
-										</p>
-										<Badge color="dark" class="mt-1 mr-1">
-											<Hashtag class="mr-1 w-3 h-3" variation="solid"></Hashtag>
-											{player.queue.indexOf(track) + 1}
-										</Badge>
-										<Badge color="dark" class="mt-1 mr-1">
-											<User class="mr-1 w-3 h-3" variation="solid"></User>
-											{track.requesterTag}
-										</Badge>
-										{#if track.info.isStream}
-											<Badge color="red">
-												<Signal class="mr-1 w-3 h-3" variation="solid"></Signal>
-												Live
-											</Badge>
-										{:else}
-											<Badge color="dark">
-												<Clock class="mr-1 w-3 h-3" variation="solid"></Clock>
-												{msToTimeString(msToTime(track.info.length), true)}
-											</Badge>
-										{/if}
-									</div>
-									<div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
-										<ButtonGroup>
-											{#if track.requesterId === user.id || (Number(guild?.permissions ?? 0) & 0x20) !== 0 || $managerMode}
-												<Button color="red" on:click={() => update('remove', player.queue.indexOf(track))}>
-													<XMark class="w-5 h-5 mr-2"></XMark>
-													Remove{track.requesterId !== user.id ? ' forcefully' : ''}
-												</Button>
-											{/if}
-											<Button color="blue" href={track.info.uri} target="_blank">
-												<ArrowTopRightOnSquare class="w-5 h-5 mr-2"></ArrowTopRightOnSquare>
-												Link
-											</Button>
-										</ButtonGroup>
-									</div>
-								</div>
-							</ListgroupItem>
-						{/each}
-					{/if}
-				</Listgroup>
-				<div class="container mt-4 mx-auto justify-center flex space-x-3">
-					<Pagination {pages} on:previous={previous} on:next={next} on:click={click} icon>
-						<svelte:fragment slot="prev">
-							<span class="sr-only">Previous</span>
-							<ChevronLeft class="w-5 h-5"/>
-						  </svelte:fragment>
-						  <svelte:fragment slot="next">
-							<span class="sr-only">Next</span>
-							<ChevronRight class="w-5 h-5"/>
-						</svelte:fragment>
-					</Pagination>
-				</div>
+{/snippet}
+{#snippet lyricsPanel()}
+	<div id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square">
+		<div style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""} class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || lyrics.loading ? ' h-full text-center' : ''}">
+			{#if loading}
+					<span class="animate-pulse">
+						Grabbing the details...
+					</span>
+			{:else if inactive}
+					<span>
+						Lyrics will appear here when a track is playing
+					</span>
+			{:else if lyrics.noHits}
+					<span>
+						No lyrics found for this track...
+					</span>
+				<span>:(</span>
+			{:else if lyrics.loading}
+					<span class="animate-pulse">
+						Get ready to sing...
+					</span>
+			{:else if lyricsExistsForTrack}
+				{#each lyrics.text as line, i}
+					{@render lyricLine(line, i)}
+				{/each}
+				<span class="opacity-50 text-sm">
+						Lyrics provided by <a href="https://lrclib.net" target="_blank" rel="noopener noreferrer" class="opacity-80 hover:underline">LRCLIB</a>
+					</span>
 			{/if}
-		</Card>
+		</div>
+	</div>
+{/snippet}
+{#snippet activeTrackCard()}
+	<div class="w-full my-auto justify-self-start flex flex-row gap-4 truncate max-md:hidden">
+		{#if !loading && !inactiveLessTimeouts && !player.pauseTimeout}
+			<img crossorigin="anonymous" src={player.playing.track?.info.artworkUrl} alt="Album Artwork" class="w-24 h-24 rounded-l-2xl object-cover shrink-0" onload={artworkImgLoaded} />
+			<div class="flex flex-col justify-center truncate pe-4">
+				<span class="text-900 font-semibold text-lg truncate">{player.playing.track?.info.title}</span>
+				<span class="text-700 text-sm">{player.playing.track?.info.author}</span>
+			</div>
+		{:else if !settings?.stay?.enabled && hasTimeout || !player.connected || loading}
+			<div class="flex flex-col justify-center truncate ps-8 pe-4">
+						<span class="text-900 font-semibold inline-flex items-center gap-2 text-lg truncate">
+							{#if loading || Object.keys(settings).length === 0}
+								<div class="h-4 rounded-full background-700 w-32 animate-pulse"></div>
+							{:else}
+								{!settings?.stay?.enabled && hasTimeout ? "Idle" : "Sleeping"}
+								<Snooze class="w-4 h-4 fill-text-900 dark:fill-text-dark-900" />
+							{/if}
+						</span>
+				<span class="text-700 text-sm">
+					{#if loading || Object.keys(settings).length === 0}
+						<div class="h-3 rounded-full background-700 w-64 animate-pulse mt-2.5"></div>
+					{:else if !settings?.stay?.enabled && hasTimeout}
+						Quaver is leaving {leavingInMs > 1000 ? "in" : ""}
+						<span class="font-semibold">{leavingInMs > 1000 ? leavingIn : "now"}</span>
+					{:else if !player.connected}
+						Play a song to get the party started!
+					{/if}
+				</span>
+			</div>
+		{/if}
+	</div>
+{/snippet}
+{#snippet playerControls()}
+	<div class="items-center my-auto flex flex-col gap-1 max-md:px-4 relative">
+		<button id="settings" class="transition button-hover-class w-5 h-5 md:hidden absolute text-800 right-6 top-4.5 ">
+			<AdjustmentsVerticalOutline />
+		</button>
+		<div class="flex flex-row items-center gap-3 mt-2 text-800">
+			<button id="shuffle" class="transition {loading || inactive || queue.length <= 1 ? 'button-disabled-class' : 'button-hover-class'}" onclick={shuffle} disabled={loading || inactive || queue.length <= 1}>
+				<ShuffleOutline class="w-6 h-10" />
+			</button>
+			<button id="rewind" class="transition {!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}" onclick={rewind} disabled={!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream}>
+				<BackwardStepSolid class="w-7 h-10" />
+			</button>
+			<button id="pauseplay" class="w-10 h-10 transition {inactive ? 'button-disabled-class' : 'button-hover-class'}" onclick={pausePlayPlayer} disabled={inactive}>
+				{#if !player.paused && !hasTimeout}
+					<Pause primaryClass="fill-text-200 dark:fill-text-dark-200" secondaryClass="fill-background-700 dark:fill-background-dark-700" />
+				{:else}
+					<Play primaryClass="fill-text-200 dark:fill-text-dark-200" secondaryClass="fill-background-700 dark:fill-background-dark-700" />
+				{/if}
+			</button>
+			<button id="skip" class="transition {inactive || hasVoteSkipped ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={skip} disabled={hasVoteSkipped}>
+				<ForwardStepSolid class="w-7 h-10" />
+				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs animate-pulse">
+							{#if hasVoteSkipped}
+								•
+							{/if}
+						</span>
+			</button>
+			<button id="loop" class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.loop > 0 ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={loop} disabled={inactive}>
+				{#if player.loop === 2}
+					<ArrowsRepeatCountOutline class="w-6 h-10" />
+				{:else}
+					<ArrowsRepeatOutline class="w-6 h-10" />
+				{/if}
+				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs">
+							{#if player.loop > 0}
+								•
+							{/if}
+						</span>
+			</button>
+		</div>
+		<div class="flex flex-row items-center w-full justify-center text-[13px] text-700">
+				<span class="w-1/12 text-end">
+					{#if player.playing?.track?.info.isStream}
+						LIVE
+					{:else}
+						{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : position.current), true)}
+					{/if}
+				</span>
+			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0) || player.playing.duration === 0 || inactive || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
+			<span class="w-1/12 text-start">
+					{#if player.playing?.track?.info?.isStream}
+						-:--
+					{:else}
+						{msToTimeString(msToTime(!player.playing?.nothingPlaying ? player.playing.duration : 0), true)}
+					{/if}
+					</span>
+		</div>
+	</div>
+{/snippet}
+{#snippet additionalControls()}
+	<div class="flex flex-row items-center justify-end ms-auto me-6 max-md:hidden">
+		<div class="flex flex-row items-center w-full text-800">
+			<button id="settings" class="transition button-hover-class w-5 h-5 mr-2">
+				<AdjustmentsVerticalOutline />
+			</button>
+			{@render volumeSlider()}
+		</div>
+	</div>
+{/snippet}
+
+<Navbar {user} centerSnippet={trackSearch} />
+
+<div class="px-4 flex flex-col gap-4 h-full md:h-[calc(100dvh-96px)] max-md:pb-32">
+	<div class="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grow md:h-[calc(100dvh-208px)]">
+		<!-- for mobile view -->
+		{@render trackSearch(true)}
+		{@render queuePanel()}
+		{@render lyricsPanel()}
+	</div>
+	<div class="md:container md:mx-auto max-md:w-full max-md:-ml-4 max-sm:px-8 max-md:px-16 h-24 flex flex-row gap-2 relative max-md:fixed max-md:bottom-4">
+		<div class="background-200 w-full rounded-2xl grid grid-cols-1 md:grid-cols-3 justify-center shadow-lg">
+			{@render activeTrackCard()}
+			{@render playerControls()}
+			{@render additionalControls()}
+		</div>
 	</div>
 </div>
-<br>
-<div class="container mx-auto">
-	<Footer {version} />
-</div>
-<br>
+
+<Dropdown simple offset={10} triggeredBy="#filter" class="!dropdown-override">
+	<DropdownHeader class="py-2">
+		Filter by requester
+	</DropdownHeader>
+	<DropdownGroup class="!dropdown-group-override">
+		{#each uniqueRequesterTracks.toSorted((a, b) => a.requesterTag.localeCompare(b.requesterTag)) as track}
+			<DropdownItem class="!dropdown-item-override flex flex-row items-center gap-2">
+				<Checkbox checked={queueSearchFilterIds.includes(track.requesterId)} value={track.requesterId} class="!h-full !w-full !checkbox-override" onchange={queueSearchFilterUpdated} />
+				{#if track.requesterAvatar}
+					<Avatar src="https://cdn.discordapp.com/avatars/{track.requesterId}/{track.requesterAvatar}.png" size="xs">
+						{getInitials(track.requesterTag)}
+					</Avatar>
+				{/if}
+				<span class="font-semibold">{track.requesterTag}</span>
+			</DropdownItem>
+		{/each}
+		{#if uniqueRequesterTracks.length === 0}
+			<DropdownItem class="!dropdown-item-override !background-200 !text-900">
+				The queue is empty.
+			</DropdownItem>
+		{/if}
+	</DropdownGroup>
+</Dropdown>
+<Dropdown offset={15} simple triggeredBy="#settings" class="!dropdown-override">
+	<DropdownHeader class="py-2">
+		Filters
+	</DropdownHeader>
+	<DropdownItem class="!dropdown-item-override">
+		<Toggle checked={player.filters?.bassboost} spanClass="!toggle-span-override" class="!toggle-override" onchange={bassboostToggle} disabled={inactive}>Bass Boost</Toggle>
+	</DropdownItem>
+	<DropdownItem class="!dropdown-item-override">
+		<Toggle checked={player.filters?.nightcore} spanClass="!toggle-span-override" class="!toggle-override" onchange={nightcoreToggle} disabled={inactive}>Nightcore</Toggle>
+	</DropdownItem>
+	{#if !loading && Object.keys(settings).length > 0}
+		<DropdownHeader class="py-2">
+			Settings
+		</DropdownHeader>
+		{#each Object.keys(settings) as key}
+			<DropdownItem class="!dropdown-item-override">
+				<Toggle checked={settings[key].enabled} id={key} spanClass="!toggle-span-override" class="!toggle-override" onchange={settingsToggle} disabled={['autolyrics', 'smartqueue'].includes(key) && !hasManageServerPermissions || key === 'stay' && inactive}>{featureMap[key].name}</Toggle>
+			</DropdownItem>
+		{/each}
+	{/if}
+	<DropdownDivider class="!dropdown-divider-override md:hidden" />
+	<div class="flex flex-row items-center px-4 py-2 md:hidden max-w-42 mx-auto">
+		{@render volumeSlider(true)}
+	</div>
+</Dropdown>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#shuffle">
+	Shuffle queue
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">
+	Rewind to start
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#pauseplay">
+	{#if !player.paused && !hasTimeout}
+		Pause
+	{:else}
+		Resume
+	{/if}
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#loop">
+	{#if player.loop === 2}
+		Looping track
+	{:else if player.loop === 1}
+		Looping queue
+	{:else}
+		Loop
+	{/if}
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#mute">
+	{#if (currentVolume !== -1 ? currentVolume : volume) === 0}
+		Unmute
+	{:else}
+		Mute
+	{/if}
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#settings">
+	Settings
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#skip">
+	{#if hasVoteSkipped}
+		Voted to skip
+	{:else}
+		Skip
+	{/if}
+</Tooltip>

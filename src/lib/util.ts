@@ -1,5 +1,6 @@
 import type { APIGuild, APIUser, Snowflake } from 'discord-api-types/v10';
 import type { Socket } from 'socket.io-client';
+import type { TimeObject } from '@zptxdev/zptx-lib';
 
 export type WebGuild = APIGuild & {
 	botInGuild?: boolean;
@@ -9,6 +10,19 @@ export type WebGuild = APIGuild & {
 };
 export type WebUser = APIUser & { manager?: boolean };
 
+export const hasManageServerPermissions = (permissions?: string): boolean => (Number(permissions) & 0x20) !== 0;
+export const friendlyTimeString = (time: TimeObject): string => {
+	if (time.s >= 30 && time.m > 0) {
+		return `${time.m + 1} minute${time.m + 1 > 1 ? 's' : ''}`;
+	} else if (time.m > 0) {
+		return `${time.m} minute${time.m > 1 ? 's' : ''}`;
+	} else {
+		return `${time.s} second${time.s > 1 ? 's' : ''}`;
+	}
+}
+export const getGuildIconURL = (guild: WebGuild): string => `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=4096`;
+export const getGuildBannerURL = (guild: WebGuild): string => `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.png?size=4096`;
+export const getUserAvatarURL = (user: WebUser): string => `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=4096`;
 export const fetchUser = async (socket: Socket, token: string) => {
 	return new Promise<{ status: string; user: WebUser; version: string }>((resolve, reject) => {
 		socket.emit(
@@ -59,12 +73,20 @@ export const request = async (socket: Socket, guildId: Snowflake, type: string) 
 		});
 	});
 };
-
-export const getInitials = (name: string) =>
-	name
-		.split(' ')
-		.map((word: string) => word[0])
-		.join('');
+export const getInitials = (name: string): string => {
+	const cleaned = name.replace(/\s+/g, ' ').trim();
+	const parts = cleaned.split(/([ .\-#])/).filter(Boolean);
+	let result = '';
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i];
+		if (['.', '-', '#'].includes(part)) {
+			result += part;
+		} else if (part !== ' ') {
+			result += part[0];
+		}
+	}
+	return result;
+};
 export const preload = (src: string): Promise<string> => {
 	if (src === '') return Promise.resolve('');
 	return new Promise(function (resolve) {

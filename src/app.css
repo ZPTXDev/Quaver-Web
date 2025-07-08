@@ -1,0 +1,311 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import "tailwindcss";
+@source "../node_modules/flowbite-svelte";
+@source "../node_modules/flowbite";
+@custom-variant dark (&:where(.dark, .dark *));
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-text-50: #f3f2f3;
+    --color-text-100: #e7e4e7;
+    --color-text-200: #cfc9cf;
+    --color-text-300: #b6afb6;
+    --color-text-400: #9e949e;
+    --color-text-500: #867986;
+    --color-text-600: #6b616b;
+    --color-text-700: #504950;
+    --color-text-800: #363036;
+    --color-text-900: #1b181b;
+    --color-text-950: #0d0c0d;
+
+    --color-background-50: #f3f0f4;
+    --color-background-100: #e7e2e9;
+    --color-background-200: #cec5d3;
+    --color-background-300: #b6a8bd;
+    --color-background-400: #9e8ba7;
+    --color-background-500: #856e91;
+    --color-background-600: #6b5874;
+    --color-background-700: #504257;
+    --color-background-800: #352c3a;
+    --color-background-900: #1b161d;
+    --color-background-950: #0d0b0f;
+
+    --color-primary-50: #f4e7fd;
+    --color-primary-100: #e9d0fb;
+    --color-primary-200: #d3a1f7;
+    --color-primary-300: #bd71f4;
+    --color-primary-400: #a742f0;
+    --color-primary-500: #9213ec;
+    --color-primary-600: #740fbd;
+    --color-primary-700: #570b8e;
+    --color-primary-800: #3a085e;
+    --color-primary-900: #1d042f;
+    --color-primary-950: #0f0218;
+
+    --color-secondary-50: #f3edf8;
+    --color-secondary-100: #e7dbf0;
+    --color-secondary-200: #d0b6e2;
+    --color-secondary-300: #b892d3;
+    --color-secondary-400: #a06dc5;
+    --color-secondary-500: #8949b6;
+    --color-secondary-600: #6d3a92;
+    --color-secondary-700: #522c6d;
+    --color-secondary-800: #371d49;
+    --color-secondary-900: #1b0f24;
+    --color-secondary-950: #0e0712;
+
+    --color-accent-50: #f3eff6;
+    --color-accent-100: #e7deed;
+    --color-accent-200: #cebeda;
+    --color-accent-300: #b69dc8;
+    --color-accent-400: #9e7cb6;
+    --color-accent-500: #855ca3;
+    --color-accent-600: #6b4983;
+    --color-accent-700: #503762;
+    --color-accent-800: #352541;
+    --color-accent-900: #1b1221;
+    --color-accent-950: #0d0910;
+
+    --color-text-dark-50: #0d0c0d;
+    --color-text-dark-100: #1b181b;
+    --color-text-dark-200: #363036;
+    --color-text-dark-300: #504950;
+    --color-text-dark-400: #6b616b;
+    --color-text-dark-500: #867986;
+    --color-text-dark-600: #9e949e;
+    --color-text-dark-700: #b6afb6;
+    --color-text-dark-800: #cfc9cf;
+    --color-text-dark-900: #e7e4e7;
+    --color-text-dark-950: #f3f2f3;
+
+    --color-background-dark-50: #0d0b0f;
+    --color-background-dark-100: #1b161d;
+    --color-background-dark-200: #352c3a;
+    --color-background-dark-300: #504257;
+    --color-background-dark-400: #6b5874;
+    --color-background-dark-500: #856e91;
+    --color-background-dark-600: #9e8ba7;
+    --color-background-dark-700: #b6a8bd;
+    --color-background-dark-800: #cec5d3;
+    --color-background-dark-900: #e7e2e9;
+    --color-background-dark-950: #f3f0f4;
+
+    --color-primary-dark-50: #0f0218;
+    --color-primary-dark-100: #1d042f;
+    --color-primary-dark-200: #3a085e;
+    --color-primary-dark-300: #570b8e;
+    --color-primary-dark-400: #740fbd;
+    --color-primary-dark-500: #9213ec;
+    --color-primary-dark-600: #a742f0;
+    --color-primary-dark-700: #bd71f4;
+    --color-primary-dark-800: #d3a1f7;
+    --color-primary-dark-900: #e9d0fb;
+    --color-primary-dark-950: #f4e7fd;
+
+    --color-secondary-dark-50: #0e0712;
+    --color-secondary-dark-100: #1b0f24;
+    --color-secondary-dark-200: #371d49;
+    --color-secondary-dark-300: #522c6d;
+    --color-secondary-dark-400: #6d3a92;
+    --color-secondary-dark-500: #8949b6;
+    --color-secondary-dark-600: #a06dc5;
+    --color-secondary-dark-700: #b892d3;
+    --color-secondary-dark-800: #d0b6e2;
+    --color-secondary-dark-900: #e7dbf0;
+    --color-secondary-dark-950: #f3edf8;
+
+    --color-accent-dark-50: #0d0910;
+    --color-accent-dark-100: #1b1221;
+    --color-accent-dark-200: #352541;
+    --color-accent-dark-300: #503762;
+    --color-accent-dark-400: #6b4983;
+    --color-accent-dark-500: #855ca3;
+    --color-accent-dark-600: #9e7cb6;
+    --color-accent-dark-700: #b69dc8;
+    --color-accent-dark-800: #cebeda;
+    --color-accent-dark-900: #e7deed;
+    --color-accent-dark-950: #f3eff6;
+}
+
+@utility text-50 {
+    @apply text-text-50 dark:text-text-dark-50;
+}
+@utility text-100 {
+    @apply text-text-100 dark:text-text-dark-100;
+}
+@utility text-200 {
+    @apply text-text-200 dark:text-text-dark-200;
+}
+@utility text-300 {
+    @apply text-text-300 dark:text-text-dark-300;
+}
+@utility text-400 {
+    @apply text-text-400 dark:text-text-dark-400;
+}
+@utility text-500 {
+    @apply text-text-500 dark:text-text-dark-500;
+}
+@utility text-600 {
+    @apply text-text-600 dark:text-text-dark-600;
+}
+@utility text-700 {
+    @apply text-text-700 dark:text-text-dark-700;
+}
+@utility text-800 {
+    @apply text-text-800 dark:text-text-dark-800;
+}
+@utility text-900 {
+    @apply text-text-900 dark:text-text-dark-900;
+}
+@utility text-950 {
+    @apply text-text-950 dark:text-text-dark-950;
+}
+@utility background-50 {
+    @apply bg-background-50 dark:bg-background-dark-50;
+}
+@utility background-100 {
+    @apply bg-background-100 dark:bg-background-dark-100;
+}
+@utility background-200 {
+    @apply bg-background-200 dark:bg-background-dark-200;
+}
+@utility background-300 {
+    @apply bg-background-300 dark:bg-background-dark-300;
+}
+@utility background-400 {
+    @apply bg-background-400 dark:bg-background-dark-400;
+}
+@utility background-500 {
+    @apply bg-background-500 dark:bg-background-dark-500;
+}
+@utility background-600 {
+    @apply bg-background-600 dark:bg-background-dark-600;
+}
+@utility background-700 {
+    @apply bg-background-700 dark:bg-background-dark-700;
+}
+@utility background-800 {
+    @apply bg-background-800 dark:bg-background-dark-800;
+}
+@utility background-900 {
+    @apply bg-background-900 dark:bg-background-dark-900;
+}
+@utility background-950 {
+    @apply bg-background-950 dark:bg-background-dark-950;
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-gradient {
+    animation: gradient-shift 15s ease infinite;
+}
+
+@utility no-scrollbar {
+    @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
+@utility dropdown-override {
+    @apply background-200 border-background-300 dark:border-background-dark-300 rounded-2xl shadow-lg;
+}
+
+@utility dropdown-group-override {
+    @apply background-200 border-background-300 dark:border-background-dark-300 py-0;
+}
+
+@utility dropdown-item-override {
+    @apply cursor-default hover:background-300 text-900 hover:text-black dark:hover:text-white rounded-lg mx-2;
+}
+
+@utility dropdown-divider-override {
+    @apply background-400;
+}
+
+@utility toggle-span-override {
+    @apply background-400 peer-checked:background-600 peer-checked:after:border-white after:bg-white after:border-background-300 dark:border-background-500 peer-focus:ring-background-300 dark:peer-focus:ring-background-800;
+}
+
+@utility toggle-override {
+    @apply rounded-sm hover:background-300;
+}
+
+@utility tooltip-override {
+    @apply background-200 text-900 border-background-300 dark:border-background-dark-300;
+}
+
+@utility checkbox-override {
+    @apply background-500 text-background-500 dark:text-background-dark-500 focus:ring-background-600 dark:focus:ring-background-dark-600;
+}
+
+@utility input-class {
+    @apply block w-full disabled:opacity-60 transition-opacity text-900 background-200 outline-none border border-background-300 focus:border-background-500 dark:border-background-dark-300 dark:focus:border-background-dark-500 focus:ring-background-500 dark:focus:ring-background-dark-500 text-sm py-3 md:py-2 ps-10 pe-17 rounded-3xl shadow-lg;
+}
+
+@utility button-disabled-class {
+    @apply cursor-not-allowed opacity-60;
+}
+
+@utility button-hover-class {
+    @apply cursor-pointer hover:opacity-80 hover:scale-105;
+}
+
+@utility drag-none {
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+}
+
+.slider {
+    --range-slider:                var(--color-background-400);
+
+    --range-handle-inactive:       var(--color-background-800), opacity(0);
+    --range-handle:                var(--color-background-500);
+    --range-handle-focus:          var(--color-accent-600);
+    --range-handle-border:         var(--color-background-400);
+
+    --range-range-inactive:        var(--color-background-700);
+    --range-range:                 var(--color-accent-600);
+    --range-range-hover:           var(--color-background-400);
+    --range-range-limit:           var(--color-background-700);
+
+    --range-float-inactive:        var(--color-background-700);
+    --range-float:                 var(--color-accent-600);
+    --range-float-text:            var(--color-background-100)
+}
+
+.slider:hover {
+    --range-handle-inactive:       var(--color-background-800);
+}
+
+.dark .slider {
+    --range-slider:                var(--color-background-dark-400);
+
+    --range-handle-inactive:       var(--color-background-dark-800) opacity(0);
+    --range-handle:                var(--color-background-dark-500);
+    --range-handle-focus:          var(--color-accent-dark-600);
+    --range-handle-border:         var(--color-background-dark-400);
+
+    --range-range-inactive:        var(--color-background-dark-700);
+    --range-range:                 var(--color-accent-dark-600);
+    --range-range-hover:           var(--color-background-dark-400);
+    --range-range-limit:           var(--color-background-dark-700);
+
+    --range-float-inactive:        var(--color-background-dark-700);
+    --range-float:                 var(--color-accent-dark-600);
+    --range-float-text:            var(--color-background-dark-100)
+}
+
+.dark .slider:hover {
+    --range-handle-inactive:       var(--color-background-dark-800);
+}

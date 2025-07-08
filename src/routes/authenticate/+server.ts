@@ -7,7 +7,7 @@ export const POST = (async ({ request, cookies }) => {
 	if (!token) return json({ success: false });
 	cookies.set('token', token, {
 		path: '/',
-		secure: env.PRIVATE_SECURE?.toLowerCase() === 'true' ?? false
+		secure: env.PRIVATE_SECURE?.toLowerCase() === 'true'
 	});
 	return json({ success: true });
 }) satisfies RequestHandler;

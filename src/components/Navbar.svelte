@@ -1,40 +1,43 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { page } from '$app/stores';
-    import { Logo } from '$images';
-    import { managerMode } from '$lib/stores';
-    import { getInitials, preload, signout, type WebUser } from '$lib/util';
-    import { Avatar, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand, Toggle } from 'flowbite-svelte';
+    import { page } from '$app/state';
+    import { getInitials, getUserAvatarURL, preload, signout, type WebUser } from '$lib/util';
+    import { Avatar, Button, DarkMode, Dropdown, DropdownDivider, DropdownHeader, DropdownItem, Navbar, NavBrand } from 'flowbite-svelte';
+    import { ArrowRightToBracketOutline, UserSolid } from 'flowbite-svelte-icons';
+    import { LogoExpanded } from '$components/icons';
+    import type { Snippet } from 'svelte';
 
-    export let user: WebUser;
+    let { user, centerSnippet }: { user: WebUser, centerSnippet?: Snippet } = $props();
 </script>
 
-<Navbar>
-    <NavBrand href={$page.url.pathname === '/dashboard' ? '#' : '/dashboard'}>
-        <img
-            src={Logo}
-            class="mr-3 h-6 sm:h-9"
-            alt="Quaver Logo"
-        />
-        <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
-            Quaver
-        </span>
+<Navbar class="my-2 px-4">
+    <NavBrand href={page.url.pathname === '/dashboard' ? '#' : '/dashboard'}>
+        <div class="py-1 w-32">
+            <LogoExpanded />
+        </div>
     </NavBrand>
-    <div class="flex md:order-2">
-        <DarkMode class="mr-2" />
-        {#await preload(user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : '') then source}
-            <Avatar id="avatar-menu" class="cursor-pointer" src={source}> {getInitials(user.username)} </Avatar>
-            <Dropdown placement="bottom" triggeredBy="#avatar-menu">
-                <DropdownHeader>
-                    <span class="block text-sm"> {user.username}{user.discriminator !== '0' ? user.discriminator : ''} </span>
+    {#if centerSnippet}
+        <div class="justify-self-center">
+            {@render centerSnippet()}
+        </div>
+    {/if}
+    <div class="flex">
+        <DarkMode class="mr-2 !text-black dark:!text-white hover:!background-400 hover:cursor-pointer" />
+        {#await preload(user.avatar ? getUserAvatarURL(user) : '') then source}
+            <Button class="!p-2.5 !bg-transparent !text-black dark:!text-white hover:!background-400 focus:ring-0 hover:cursor-pointer" id="avatar-menu">
+                <UserSolid class="w-5 h-5" />
+            </Button>
+            <Dropdown simple placement="bottom-end" triggeredBy="#avatar-menu" class="!dropdown-override">
+                <DropdownHeader class="flex flex-row items-center gap-2">
+                    <Avatar src={source} size="xs">{getInitials(user.global_name ?? user.username)}</Avatar>
+                    <span class="font-semibold tracking-tight">{user.global_name ?? user.username}</span>
+                    <span class="tracking-tight -ml-1">{user.global_name ? `(${user.username})` : `${user.discriminator !== '0' ? user.discriminator : ''}`}</span>
                 </DropdownHeader>
-                {#if user.manager}
-                    <DropdownItem class="cursor-default">
-                        <Toggle bind:checked={$managerMode}>Manager Mode</Toggle>
-                    </DropdownItem>
-                    <DropdownDivider></DropdownDivider>
-                {/if}
-                <DropdownItem on:click={async () => {await signout(); goto('/');}}>Sign out</DropdownItem>
+                <DropdownDivider class="!dropdown-divider-override"></DropdownDivider>
+                <DropdownItem onclick={async () => {await signout(); await goto('/');}} liClass="mx-2 pt-0.5" class="w-full font-medium !dropdown-item-override flex flex-row gap-1 !mx-0 items-center !cursor-pointer">
+                    <ArrowRightToBracketOutline class="w-5 h-5" />
+                    Sign out
+                </DropdownItem>
             </Dropdown>
         {/await}
     </div>
