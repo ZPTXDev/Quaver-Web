@@ -586,7 +586,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="flex flex-col gap-2 overflow-y-scroll pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)]">
+		<div class="flex flex-col gap-2 overflow-y-scroll scrollbar pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)]">
 			{#if !player.playing?.nothingPlaying}
 				<TrackCard track={player.playing.track} position={0} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
 			{/if}
@@ -599,7 +599,7 @@
 	</div>
 {/snippet}
 {#snippet lyricsPanel()}
-	<div id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square">
+	<div id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll scrollbar shadow-lg max-md:aspect-square">
 		<div style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""} class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || lyrics.loading ? ' h-full text-center' : ''}">
 			{#if loading}
 					<span class="animate-pulse">

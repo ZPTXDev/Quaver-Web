@@ -266,6 +266,13 @@
     -o-user-drag: none;
 }
 
+@utility scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-background-300) transparent;
+    scrollbar-gutter: stable;
+    scrollbar-arrow-color: transparent;
+}
+
 .slider {
     --range-slider:                var(--color-background-400);
 
