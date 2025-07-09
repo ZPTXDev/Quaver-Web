@@ -582,7 +582,7 @@
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
 					<div class="h-4/7 w-0.5 background-300"></div>
-					<ListMusicOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer" />
+					<ListMusicOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
 				</div>
 			</div>
 		</div>
