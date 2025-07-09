@@ -266,11 +266,12 @@
     -o-user-drag: none;
 }
 
-@utility scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-background-300) transparent;
-    scrollbar-gutter: stable;
-    scrollbar-arrow-color: transparent;
+.simplebar-placeholder {
+    height: auto !important;
+}
+
+#lyrics.full-height .simplebar-content-wrapper, #lyrics.full-height .simplebar-content {
+    height: 100% !important;
 }
 
 .slider {

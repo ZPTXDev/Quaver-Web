@@ -45,7 +45,7 @@
 	</Dropdown>
 {/snippet}
 
-<div id="track-{position}" class="group transition-colors flex flex-row items-center gap-3 px-2 py-2 {position === 0 ? 'background-300 ' : ''}hover:background-300 rounded-lg cursor-pointer">
+<div id="track-{position}" class="group transition-colors flex flex-row items-center gap-3 px-2 py-2 {position === 0 ? 'background-300 ' : 'mt-2 '}hover:background-300 rounded-lg cursor-pointer">
 	{#if position === 0}
 		<AudioLines class="text-600" />
 	{:else}
