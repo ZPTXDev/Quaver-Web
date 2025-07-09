@@ -766,7 +766,7 @@
 			</DropdownItem>
 		{/each}
 		{#if uniqueRequesterTracks.length === 0}
-			<DropdownItem class="!dropdown-item-override !background-200 !text-900">
+			<DropdownItem class="!dropdown-item-override !background-200 hover:!background-200 !text-900 hover:!text-900">
 				The queue is empty.
 			</DropdownItem>
 		{/if}
