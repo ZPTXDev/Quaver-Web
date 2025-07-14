@@ -593,12 +593,12 @@
 		<div data-simplebar class="flex flex-col overflow-y-scroll pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)] no-scrollbar">
 			{#if !player.playing?.nothingPlaying}
 				<TrackCard track={player.playing.track} position={0} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
+				{#each queue as track, i}
+					{#if (!queueSearchValue || (track.info.title.toLowerCase().includes(queueSearchValue.toLowerCase()) || track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase()))) && (queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))}
+						<TrackCard {track} position={i + 1} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
+					{/if}
+				{/each}
 			{/if}
-			{#each queue as track, i}
-				{#if (!queueSearchValue || (track.info.title.toLowerCase().includes(queueSearchValue.toLowerCase()) || track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase()))) && (queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))}
-					<TrackCard {track} position={i + 1} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
-				{/if}
-			{/each}
 		</div>
 	</div>
 {/snippet}
