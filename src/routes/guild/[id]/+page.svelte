@@ -101,7 +101,12 @@
 	);
 	let hasVoteSkipped = $derived(!inactive && player.playing.skip?.users?.includes(user.id))
 	let volume = $derived(player.volume);
-	let queue: any[] = $derived(player.queue ?? []);
+	let queue: any[] = $derived(player.queue?.filter((track: any) => (
+		!queueSearchValue
+		|| track.info.title.toLowerCase().includes(queueSearchValue.toLowerCase()
+		|| track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase())))
+			&& (queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))
+	) ?? []);
 	let lyricsMetaMatchesTrack = $derived(
 		player.playing.track?.info.title === lyrics.title
 		&& player.playing.track?.info.author === lyrics.artist
@@ -113,7 +118,7 @@
 		&& lyricsMetaMatchesTrack,
 	);
 	let uniqueRequesterTracks = $derived(
-		queue.filter((value, index, self) =>
+		(player.queue ?? []).filter((value, index, self) =>
 			self.findIndex(v => v.requesterId === value.requesterId) === index),
 	);
 
@@ -593,11 +598,28 @@
 		<div data-simplebar class="flex flex-col overflow-y-scroll pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)] no-scrollbar">
 			{#if !player.playing?.nothingPlaying}
 				<TrackCard track={player.playing.track} position={0} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
+				<div class="h-[1px] background-400 mx-auto my-4"></div>
 				{#each queue as track, i}
-					{#if (!queueSearchValue || (track.info.title.toLowerCase().includes(queueSearchValue.toLowerCase()) || track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase()))) && (queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))}
-						<TrackCard {track} position={i + 1} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
-					{/if}
+					<TrackCard {track} position={i + 1} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
 				{/each}
+			{/if}
+			{#if player.playing?.nothingPlaying || queue.length === 0}
+				<div class="flex flex-col items-center justify-center h-full{player.playing?.nothingPlaying ? ' mt-4' : ''}">
+					<span class="text-900 font-semibold text-2xl">
+						{player.playing?.nothingPlaying
+							? "Nothing's playing right now"
+							: queueSearchValue || queueSearchFilterIds.length > 0
+								? "No results from your search"
+								: "No more tracks in the queue"}
+					</span>
+					<span class="text-700 text-sm">
+						{player.playing?.nothingPlaying
+							? "Add some tracks to the queue to get started!"
+							: queueSearchValue || queueSearchFilterIds.length > 0
+								? "Try refining your search criteria."
+								: "Add more tracks to keep it going!"}
+					</span>
+				</div>
 			{/if}
 		</div>
 	</div>
