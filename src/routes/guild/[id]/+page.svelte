@@ -604,7 +604,7 @@
 				{/each}
 			{/if}
 			{#if player.playing?.nothingPlaying || queue.length === 0}
-				<div class="flex flex-col items-center justify-center h-full{player.playing?.nothingPlaying ? ' mt-4' : ''}">
+				<div class="flex flex-col items-center justify-center text-center h-full{player.playing?.nothingPlaying ? ' mt-4' : ''}">
 					<span class="text-900 font-semibold text-2xl">
 						{player.playing?.nothingPlaying
 							? "Nothing's playing right now"
