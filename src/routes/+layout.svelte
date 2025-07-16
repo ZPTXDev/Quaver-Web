@@ -4,16 +4,13 @@
 	import { state } from '$lib/states.svelte';
 	import { tips, loadingHeadline } from '$lib/constants';
 	import { Spinner } from 'flowbite-svelte';
-	import { toasts } from 'svelte-toasts';
 	import { fade } from 'svelte/transition';
 	import '../app.css';
 
 	if (page.url.pathname !== '/') state.manualLoading = true;
 	beforeNavigate(() => {
-		toasts.clearAll();
 		state.manualLoading = true;
 	});
-	toasts.clearAll();
 </script>
 
 {#if navigating.to || state.manualLoading}

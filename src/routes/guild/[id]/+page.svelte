@@ -7,17 +7,18 @@
 	import { state as states } from '$lib/states.svelte';
 	import { goto } from '$app/navigation';
 	import {
+		errorToast,
 		fetchGuilds,
 		fetchUser,
 		friendlyTimeString, getInitials,
-		hasManageServerPermissions as hasManageServerPermissionsUtil,
+		hasManageServerPermissions as hasManageServerPermissionsUtil, infoToast,
 		join,
 		request,
-		signout,
+		signout, successToast,
 		type WebGuild,
 		type WebUser
 	} from '$lib/util';
-	import { featureMap, initialWebUserState } from '$lib/constants';
+	import { featureMap, initialWebUserState, toastOptions } from '$lib/constants';
 	import type { PageData } from './$types';
 	import { env } from '$env/dynamic/public';
 	import { Navbar, TrackCard } from '$components';
@@ -45,6 +46,7 @@
 	import chroma from 'chroma-js';
 	import 'simplebar';
 	import 'simplebar/dist/simplebar.min.css';
+	import { SvelteToast } from '@zerodevx/svelte-toast';
 
 	let { data }: { data: PageData } = $props();
 	const colorThief = new ColorThief();
@@ -225,7 +227,20 @@
 		if (addTrackLoading || !value) return;
 		addTrackLoading = true;
 		states.socket.emit('update', [guild.id, { type: 'add', value }], (response: { status: string }) => {
-			if (response.status === 'success') addTrackValue = '';
+			if (response.status === 'success') {
+				addTrackValue = '';
+				successToast('Track added to the queue successfully.');
+			}
+			else {
+				switch (response.status) {
+					case 'error-no-results':
+						errorToast('No results found for the provided query.');
+						break;
+					default:
+						errorToast('An error occurred while adding the track.');
+						break;
+				}
+			}
 			addTrackLoading = false;
 		});
 	}
@@ -235,6 +250,7 @@
 		states.socket.emit('update', [guild.id, { type: 'paused', value: player.paused }], (response: { status: string }) => {
 			if (response.status !== 'success') {
 				player.paused = !player.paused; // revert the pause state
+				errorToast(`Failed to ${player.paused ? 'pause' : 'resume'} the player.`);
 				return;
 			}
 		});
@@ -242,7 +258,7 @@
 	function shuffle() {
 		if (inactive || queue.length <= 1) return;
 		states.socket.emit('update', [guild.id, { type: 'shuffle' }], (response: { status: string }) => {
-			if (response.status !== 'success') return;
+			if (response.status !== 'success') errorToast('Failed to shuffle the queue.');
 		});
 	}
 	function rewind() {
@@ -254,6 +270,7 @@
 				if (response.status !== 'success') {
 					position.current = position.lastKnown;
 					position.dragging = false;
+					errorToast('Failed to rewind the track.');
 					return;
 				}
 				position.lastKnown = position.current;
@@ -264,7 +281,7 @@
 	function skip() {
 		if (hasVoteSkipped) return;
 		states.socket.emit('update', [guild.id, { type: 'skip' }], (response: { status: string }) => {
-			if (response.status !== 'success') return;
+			if (response.status !== 'success') errorToast('Failed to skip the track.');
 		});
 	}
 	function loop() {
@@ -273,6 +290,7 @@
 		states.socket.emit('update', [guild.id, { type: 'loop', value: player.loop }], (response: { status: string }) => {
 			if (response.status !== 'success') {
 				player.loop = (player.loop - 1 + 3) % 3; // revert the loop state
+				errorToast(`Failed to ${player.loop === 0 ? 'disable looping' : player.loop === 2 ? 'enable single track loop' : 'enable queue loop'}.`);
 				return;
 			}
 		});
@@ -282,6 +300,7 @@
 		currentVolume = player.volume === 0 ? 100 : 0
 		states.socket.emit('update', [guild.id, { type: 'volume', value: currentVolume }], (response: { status: string }) => {
 			if (response.status !== 'success') {
+				errorToast(`Failed to ${currentVolume === 0 ? 'mute' : 'unmute'} the player.`);
 				currentVolume = -1;
 				return;
 			}
@@ -294,9 +313,11 @@
 		player.filters.bassboost = !player.filters.bassboost;
 		states.socket.emit('update', [guild.id, { type: 'bassboost', value: player.filters.bassboost }], (response: { status: string }) => {
 			if (response.status !== 'success') {
+				errorToast(`Failed to ${player.filters.bassboost ? 'enable' : 'disable'} Bass Boost.`);
 				player.filters.bassboost = !player.filters.bassboost; // revert the bassboost state
 				return;
 			}
+			infoToast(`<div class="flex flex-col gap-1"><span>Bass Boost <strong>${player.filters.bassboost ? 'enabled' : 'disabled'}</strong>.</span><span class="text-xs">Filters may take a few seconds to apply.</span></div>`);
 		});
 	}
 	function nightcoreToggle() {
@@ -304,9 +325,11 @@
 		player.filters.nightcore = !player.filters.nightcore;
 		states.socket.emit('update', [guild.id, { type: 'nightcore', value: player.filters.nightcore }], (response: { status: string }) => {
 			if (response.status !== 'success') {
+				errorToast(`Failed to ${player.filters.nightcore ? 'enable' : 'disable'} Nightcore.`);
 				player.filters.nightcore = !player.filters.nightcore; // revert the nightcore state
 				return;
 			}
+			infoToast(`<div class="flex flex-col gap-1"><span>Nightcore <strong>${player.filters.nightcore ? 'enabled' : 'disabled'}</strong>.</span><span class="text-xs">Filters may take a few seconds to apply.</span></div>`);
 		});
 	}
 	function settingsToggle(event: Event) {
@@ -315,11 +338,13 @@
 		const id = event.target.id;
 		if (enabled && !settings[id].whitelisted) {
 			event.target.checked = false;
+			errorToast(`You need <strong>Quaver Premium</strong> to enable ${featureMap[id].name}.`);
 			return;
 		}
 		states.socket.emit('update', [guild.id, { type: `${featureMap[id].id}Feature`, value: enabled }], (response: { status: string }) => {
 			if (response.status !== 'success' && event.target instanceof HTMLInputElement) {
 				event.target.checked = settings[id].enabled;
+				errorToast(`Failed to ${enabled ? 'enable' : 'disable'} ${featureMap[id].name}.`);
 				return;
 			}
 			settings[id].enabled = enabled;
@@ -756,6 +781,8 @@
 		</div>
 	</div>
 {/snippet}
+
+<SvelteToast options={toastOptions} />
 
 <Navbar {user} centerSnippet={trackSearch} />
 

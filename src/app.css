@@ -317,3 +317,15 @@
 .dark .slider:hover {
     --range-handle-inactive:       var(--color-background-dark-800);
 }
+
+:root {
+    --toastContainerTop: auto;
+    --toastContainerRight: auto;
+    --toastContainerBottom: 7.25rem;
+    --toastContainerLeft: calc(50vw - 10rem);
+    --toastBorderRadius: 1rem;
+    --toastMsgPadding: 0.5rem;
+    --toastPadding: 0.5rem;
+    --toastBarHeight: 0;
+    --toastWidth: 20rem;
+}

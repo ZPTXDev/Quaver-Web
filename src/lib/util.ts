@@ -1,6 +1,7 @@
 import type { APIGuild, APIUser, Snowflake } from 'discord-api-types/v10';
 import type { Socket } from 'socket.io-client';
 import type { TimeObject } from '@zptxdev/zptx-lib';
+import { toast } from '@zerodevx/svelte-toast';
 
 export type WebGuild = APIGuild & {
 	botInGuild?: boolean;
@@ -115,3 +116,32 @@ export const signout = async (guildId?: Snowflake) => {
 	if (!json.success) throw new Error('Failed to sign out');
 	return result;
 };
+export const successToast = (message: string) => toast.push(message, {
+		theme: {
+			'--toastBackground': 'green',
+			'--toastColor': 'white',
+		}
+	},
+)
+export const errorToast = (message: string) => toast.push(message, {
+		theme: {
+			'--toastBackground': '#d10404',
+			'--toastColor': 'white',
+		}
+	},
+);
+export const infoToast = (message: string) => toast.push(message, {
+		theme: {
+			'--toastBackground': '#3869ff',
+			'--toastColor': 'white',
+		}
+	},
+);
+export const warningToast = (message: string) => toast.push(message, {
+		theme: {
+			'--toastBackground': 'orange',
+			'--toastColor': 'white',
+			'--toastBarBackground': 'darkorange'
+		}
+	},
+);
