@@ -17,7 +17,7 @@
 </script>
 
 {#snippet trackDropdown(mobile = false)}
-	<Dropdown {isOpen} simple offset={mobile ? 0 : 10} class="!dropdown-override {mobile ? 'md:hidden' : 'max-md:hidden'}" triggeredBy={`#track-${position}`} placement={mobile ? "bottom" : "right-start"}>
+	<Dropdown bind:isOpen simple offset={mobile ? 0 : 10} class="!dropdown-override {mobile ? 'md:hidden' : 'max-md:hidden'}" triggeredBy={`#track-${position}`} placement={mobile ? "bottom" : "right-start"}>
 		<DropdownHeader class="flex flex-col gap-1">
 			<span class="text-xs">Requested by</span>
 			<div class="flex flex-row items-center gap-2">
