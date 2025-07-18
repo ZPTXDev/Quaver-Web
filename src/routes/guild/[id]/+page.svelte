@@ -124,7 +124,7 @@
 		|| !lyrics.text.some((line: { text: string, time: number }) => line.time !== 0)
 			? 'full'
 			: lyrics.text.some((line: { text: string, time: number }) => line.time !== 0)
-			&& lyrics.text.filter((line: { text: string, time: number }) => line.time === 0).length > 0
+			&& lyrics.text.filter((line: { text: string, time: number }) => line.time === 0 && line.text !== '').length > 0
 				? 'partial'
 				: false,
 	);
