@@ -9,21 +9,6 @@ export const toastOptions = {
 	reversed: true,
 	intro: { y: 192 },
 };
-export const loadingHeadline = [
-	'Loading...',
-	'Just a second...',
-	'Almost there...',
-	'Getting there...',
-	'Thinking really hard...',
-	'Working on it...',
-];
-export const tips = [
-	'Quaver is open source! You can contribute to the project on GitHub.',
-	"Quaver's translations are entirely crowdsourced.",
-	'The source code for this website is available on GitHub!',
-	'Quaver started as a hobby project on March 22nd, 2021.',
-	'This website is on its 4th redesign!',
-];
 export const dashboardHeadline = [
 	'Welcome back,',
 	'Hey there,',
