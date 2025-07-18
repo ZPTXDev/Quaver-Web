@@ -119,6 +119,15 @@
 		lyrics.text.length > 0
 		&& lyricsMetaMatchesTrack,
 	);
+	let lyricsUnsynced = $derived(
+		!lyricsExistsForTrack
+		|| !lyrics.text.some((line: { text: string, time: number }) => line.time !== 0)
+			? 'full'
+			: lyrics.text.some((line: { text: string, time: number }) => line.time !== 0)
+			&& lyrics.text.filter((line: { text: string, time: number }) => line.time === 0).length > 0
+				? 'partial'
+				: false,
+	);
 	let uniqueRequesterTracks = $derived(
 		(player.queue ?? []).filter((value, index, self) =>
 			self.findIndex(v => v.requesterId === value.requesterId) === index),
@@ -653,29 +662,38 @@
 	<div data-simplebar id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading || inactive || lyrics.noHits || lyrics.loading ? ' full-height' : ''}">
 		<div style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""} class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || lyrics.loading ? ' h-full text-center' : ''}">
 			{#if loading}
-					<span class="animate-pulse">
-						Grabbing the details...
-					</span>
+				<span class="animate-pulse">
+					Grabbing the details...
+				</span>
 			{:else if inactive}
-					<span>
-						Lyrics will appear here when a track is playing
-					</span>
+				<span>
+					Lyrics will appear here when a track is playing
+				</span>
 			{:else if lyrics.noHits}
-					<span>
-						No lyrics found for this track...
-					</span>
+				<span>
+					No lyrics found for this track...
+				</span>
 				<span>:(</span>
 			{:else if lyrics.loading}
-					<span class="animate-pulse">
-						Get ready to sing...
-					</span>
+				<span class="animate-pulse">
+					Get ready to sing...
+				</span>
 			{:else if lyricsExistsForTrack}
+				{#if lyricsUnsynced === 'full'}
+					<span class="opacity-50 text-sm">
+						Auto-scroll isn't available for these lyrics yet, sorry!
+					</span>
+				{:else if lyricsUnsynced === 'partial'}
+					<span class="opacity-50 text-sm">
+						Some part(s) of these lyrics aren't synced - auto-scroll may not work as expected.
+					</span>
+				{/if}
 				{#each lyrics.text as line, i}
 					{@render lyricLine(line, i)}
 				{/each}
 				<span class="opacity-50 text-sm">
-						Lyrics provided by <a href="https://lrclib.net" target="_blank" rel="noopener noreferrer" class="opacity-80 hover:underline">LRCLIB</a>
-					</span>
+					Lyrics provided by <a href="https://lrclib.net" target="_blank" rel="noopener noreferrer" class="opacity-80 hover:underline">LRCLIB</a>
+				</span>
 			{/if}
 		</div>
 	</div>
