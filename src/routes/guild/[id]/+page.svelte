@@ -836,7 +836,7 @@
 						</Avatar>
 					{/await}
 				{/if}
-				<span class="font-semibold">{track.requesterTag}</span>
+				<span class="font-semibold tracking-tight text-black dark:text-white">{track.requesterTag}</span>
 			</DropdownItem>
 		{/each}
 		{#if uniqueRequesterTracks.length === 0}
