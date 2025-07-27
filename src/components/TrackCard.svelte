@@ -2,7 +2,7 @@
 	import { ArrowUpRightFromSquareOutline, CloseOutline, DotsHorizontalOutline } from 'flowbite-svelte-icons';
 	import { AudioLines } from '$components/icons';
 	import { Avatar, Dropdown, DropdownDivider, DropdownHeader, DropdownItem } from 'flowbite-svelte';
-	import { getInitials } from '$lib/util';
+	import { getInitials, preload, lazy } from '$lib/util';
 	import { state as states } from '$lib/states.svelte';
 
 	let { track, position, guildId, userId, hasManageServerPermissions } = $props();
@@ -21,7 +21,9 @@
 		<DropdownHeader class="flex flex-col gap-1">
 			<span class="text-xs">Requested by</span>
 			<div class="flex flex-row items-center gap-2">
-				<Avatar src="https://cdn.discordapp.com/avatars/{track.requesterId}/{track.requesterAvatar}.png" size="xs">{getInitials(track.requesterTag)}</Avatar>
+				{#await preload(`https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png`) then source}
+					<Avatar src={source} size="xs">{getInitials(track.requesterTag)}</Avatar>
+				{/await}
 				<span class="font-semibold tracking-tight">{track.requesterTag}</span>
 				{#if track.requesterId === userId}
 					<span class="tracking-tight opacity-50 -ml-1"> (you)</span>
@@ -51,7 +53,7 @@
 	{:else}
 		<span class="text-sm min-w-6 text-400 text-end">{position}</span>
 	{/if}
-	<img crossorigin="anonymous" src={track.info.artworkUrl} alt="Album Artwork" class="w-16 h-16 rounded-lg object-cover shrink-0" />
+	<img crossorigin="anonymous" src="" use:lazy={track.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-16 h-16 rounded-lg object-cover shrink-0" />
 	<div class="flex flex-col justify-center truncate">
 		<span class="text-900 font-semibold text-lg truncate">{track.info.title}</span>
 		<span class="text-700 text-sm truncate">{track.info.author}</span>

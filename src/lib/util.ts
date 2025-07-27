@@ -96,6 +96,32 @@ export const preload = (src: string): Promise<string> => {
 		img.src = src;
 	});
 };
+export const lazy = (image: any, src: string) => {
+	const loaded = () => {
+		image.style.opacity = '1';
+	}
+	const observer = new IntersectionObserver(entries => {
+		if (entries[0].isIntersecting) {
+			image.src = src;
+			if (image.complete) {
+				loaded();
+			} else {
+				image.addEventListener('load', loaded);
+			}
+		}
+	}, {
+		root: null,
+		rootMargin: "0px",
+		threshold: 0,
+	})
+	observer.observe(image);
+
+	return {
+		destroy() {
+			image.removeEventListener('load', loaded);
+		}
+	};
+}
 export const sortGuilds = (a: WebGuild, b: WebGuild) => {
 	if (a.botInGuild && !a.idle && b.botInGuild && b.idle) return -1;
 	if (b.botInGuild && !b.idle && a.botInGuild && a.idle) return 1;
