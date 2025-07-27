@@ -13,7 +13,7 @@
 		friendlyTimeString, getInitials,
 		hasManageServerPermissions as hasManageServerPermissionsUtil, infoToast,
 		join,
-		lazy,
+		lazy, preload,
 		request,
 		signout, successToast,
 		type WebGuild,
@@ -830,9 +830,11 @@
 			<DropdownItem class="!dropdown-item-override flex flex-row items-center gap-2">
 				<Checkbox checked={queueSearchFilterIds.includes(track.requesterId)} value={track.requesterId} class="!h-full !w-full !checkbox-override focus:ring-0" onchange={queueSearchFilterUpdated} />
 				{#if track.requesterAvatar}
-					<Avatar src="https://cdn.discordapp.com/avatars/{track.requesterId}/{track.requesterAvatar}.png" size="xs">
-						{getInitials(track.requesterTag)}
-					</Avatar>
+					{#await preload(`https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png`) then source}
+						<Avatar src={source} size="xs">
+							{getInitials(track.requesterTag)}
+						</Avatar>
+					{/await}
 				{/if}
 				<span class="font-semibold">{track.requesterTag}</span>
 			</DropdownItem>
