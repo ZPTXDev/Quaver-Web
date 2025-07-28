@@ -54,8 +54,12 @@ function lazy(image, src) {
 		<div class="rounded-xl relative h-32 w-full overflow-hidden">
 			{#if guild?.banner || guild?.icon}
 				<div class="{imgsLoaded >= 2 ? 'opacity-0' : 'opacity-50'} transition-opacity absolute h-32 w-full {guild ? 'background-700' : 'background-400'}"></div>
-				<img draggable="false" ondragstart={(e) => {e.preventDefault(); return false;}} src="" use:lazy={guild.banner ? getGuildBannerURL(guild) : getGuildIconURL(guild)} alt={guild.name} class="{imgsLoaded >= 2 ? 'opacity-100' : 'opacity-0'} transition-opacity pointer-events-none drag-none absolute h-32 w-full blur-sm {guild.banner ? '' : ' object-none scale-150'}" />
-				<img draggable="false" ondragstart={(e) => {e.preventDefault(); return false;}} src="" use:lazy={getGuildIconURL(guild)} alt={guild.name} class="{imgsLoaded >= 2 ? 'opacity-100' : 'opacity-0'} transition-opacity pointer-events-none drag-none absolute h-20 w-20 object-cover rounded-xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+				{#key guild.banner}
+					<img draggable="false" ondragstart={(e) => {e.preventDefault(); return false;}} src="" use:lazy={guild.banner ? getGuildBannerURL(guild) : getGuildIconURL(guild)} alt={guild.name} class="{imgsLoaded >= 2 ? 'opacity-100' : 'opacity-0'} transition-opacity pointer-events-none drag-none absolute h-32 w-full blur-sm {guild.banner ? '' : ' object-none scale-150'}" />
+				{/key}
+				{#key guild.icon}
+					<img draggable="false" ondragstart={(e) => {e.preventDefault(); return false;}} src="" use:lazy={getGuildIconURL(guild)} alt={guild.name} class="{imgsLoaded >= 2 ? 'opacity-100' : 'opacity-0'} transition-opacity pointer-events-none drag-none absolute h-20 w-20 object-cover rounded-xl top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+				{/key}
 			{:else}
 				<div class="absolute h-32 w-full {guild ? 'background-700' : 'background-400'}"></div>
 				<span class="absolute h-20 w-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 {guild ? 'text-3xl' : 'text-4xl'} text-100 text-center leading-[80px]">{guild ? getInitials(guild.name) : "+"}</span>

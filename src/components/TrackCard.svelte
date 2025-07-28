@@ -7,6 +7,7 @@
 
 	let { track, position, guildId, userId, hasManageServerPermissions } = $props();
 	let isOpen = $state(false);
+	console.log(track);
 
 	function remove() {
 		if (!hasManageServerPermissions && track.requesterId !== userId) return;
@@ -53,7 +54,9 @@
 	{:else}
 		<span class="text-sm min-w-6 text-400 text-end">{position}</span>
 	{/if}
-	<img crossorigin="anonymous" src="" use:lazy={track.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-16 h-16 rounded-lg object-cover shrink-0" />
+	{#key track.info.artworkUrl}
+		<img crossorigin="anonymous" src="" use:lazy={track.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-16 h-16 rounded-lg object-cover shrink-0" />
+	{/key}
 	<div class="flex flex-col justify-center truncate">
 		<span class="text-900 font-semibold text-lg truncate">{track.info.title}</span>
 		<span class="text-700 text-sm truncate">{track.info.author}</span>

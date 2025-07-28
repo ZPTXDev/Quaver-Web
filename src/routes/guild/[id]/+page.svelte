@@ -702,7 +702,9 @@
 {#snippet activeTrackCard()}
 	<div class="w-full my-auto justify-self-start flex flex-row gap-4 truncate max-md:hidden">
 		{#if !loading && !inactiveLessTimeouts && !player.pauseTimeout}
-			<img crossorigin="anonymous" src="" use:lazy={player.playing.track?.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-24 h-24 rounded-l-2xl object-cover shrink-0" onload={artworkImgLoaded} />
+			{#key player.playing.track?.info.artworkUrl}
+				<img crossorigin="anonymous" src="" use:lazy={player.playing.track?.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-24 h-24 rounded-l-2xl object-cover shrink-0" onload={artworkImgLoaded} />
+			{/key}
 			<div class="flex flex-col justify-center truncate pe-4">
 				<span class="text-900 font-semibold text-lg truncate">{player.playing.track?.info.title}</span>
 				<span class="text-700 text-sm">{player.playing.track?.info.author}</span>
