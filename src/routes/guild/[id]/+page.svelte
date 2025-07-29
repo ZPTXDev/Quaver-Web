@@ -630,7 +630,7 @@
 	</div>
 {/snippet}
 {#snippet lyricLine(line: { text: string, time: number }, index: number)}
-	<button onclick={() => seekTo(line.time)} id="lyricline-{index}" class="transition-opacity {lyricLineColor(line)} text-start{!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? '' : ' hover:cursor-pointer hover:opacity-100'}">{line.text}</button>
+	<button onclick={() => lyricsUnsynced === 'full' ? undefined : seekTo(line.time)} id="lyricline-{index}" class="transition-opacity {lyricLineColor(line)} text-start{lyricsUnsynced === 'full' || !hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? '' : ' hover:cursor-pointer hover:opacity-100'}">{line.text}</button>
 {/snippet}
 {#snippet volumeSlider(mobile = false)}
 	<button id="mute" class="transition {!inVoiceChannel ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 -mr-0.5" onclick={mute} disabled={!inVoiceChannel}>
