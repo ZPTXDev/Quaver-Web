@@ -102,7 +102,7 @@
 	let hasManageServerPermissions = $derived(hasManageServerPermissionsUtil(guild?.permissions));
 	let hasTrackPermissions = $derived(
 		player.playing.track?.requesterId === user.id
-		|| hasManageServerPermissions
+		|| hasManageServerPermissions,
 	);
 	let hasVoteSkipped = $derived(!inactive && player.playing.skip?.users?.includes(user.id))
 	let volume = $derived(player.volume);
@@ -278,8 +278,25 @@
 			if (response.status !== 'success') errorToast('Failed to shuffle the queue.');
 		});
 	}
+	function seekTo(ms: number) {
+		if (!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		position.dragging = true;
+		position.current = ms;
+		if (player.connected && !player.playing?.nothingPlaying) {
+			states.socket.emit('update', [guild.id, { type: 'seek', value: ms }], (response: { status: string }) => {
+				if (response.status !== 'success') {
+					position.current = position.lastKnown;
+					position.dragging = false;
+					errorToast('Failed to rewind the track.');
+					return;
+				}
+				position.lastKnown = position.current;
+				position.dragging = false;
+			});
+		}
+	}
 	function rewind() {
-		if ((player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0) || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		if (!hasTrackPermissions || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
 		position.dragging = true;
 		position.current = 0;
 		if (player.connected && !player.playing?.nothingPlaying) {
@@ -613,7 +630,7 @@
 	</div>
 {/snippet}
 {#snippet lyricLine(line: { text: string, time: number }, index: number)}
-	<span id="lyricline-{index}" class="transition-opacity {lyricLineColor(line)}">{line.text}</span>
+	<button onclick={() => seekTo(line.time)} id="lyricline-{index}" class="transition-opacity {lyricLineColor(line)} text-start{!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? '' : ' hover:cursor-pointer hover:opacity-100'}">{line.text}</button>
 {/snippet}
 {#snippet volumeSlider(mobile = false)}
 	<button id="mute" class="transition {!inVoiceChannel ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 -mr-0.5" onclick={mute} disabled={!inVoiceChannel}>
@@ -806,7 +823,7 @@
 					{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : position.current), true)}
 				{/if}
 			</span>
-			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0) || player.playing.duration === 0 || inactive || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
+			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={!hasTrackPermissions || player.playing.duration === 0 || inactive || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
 			<span class="w-1/12 text-start">
 				{#if player.playing?.track?.info?.isStream}
 					-:--
