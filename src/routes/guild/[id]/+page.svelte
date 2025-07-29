@@ -33,6 +33,7 @@
 		BackwardStepSolid,
 		CloseOutline,
 		ForwardStepSolid,
+		FilterOutline,
 		ListMusicOutline,
 		MusicOutline,
 		ShuffleOutline,
@@ -88,6 +89,7 @@
 			bg: '',
 			text: '',
 		},
+		autoScrollEnabled: true,
 	});
 	let loading = $state(true);
 
@@ -133,6 +135,11 @@
 		(player.queue ?? []).filter((value, index, self) =>
 			self.findIndex(v => v.requesterId === value.requesterId) === index),
 	);
+
+	function toggleAutoScroll() {
+		if (lyricsUnsynced === 'full') return;
+		lyrics.autoScrollEnabled = !lyrics.autoScrollEnabled;
+	}
 
 	function queueSearchFilterUpdated(event: Event) {
 		if (!(event.target instanceof HTMLInputElement)) return;
@@ -444,8 +451,7 @@
 							'#lyrics .simplebar-content-wrapper'
 						);
 						const lyricElement = document.getElementById(`lyricline-${index}`);
-						if (lyricsContainer && lyricElement) {
-							// lyricElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+						if (lyricsContainer && lyricElement && lyrics.autoScrollEnabled) {
 							scrollChildIntoView(lyricsContainer, lyricElement);
 							lyrics.lastScrolledElementId = `lyricline-${index}`;
 						}
@@ -635,7 +641,7 @@
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
 					<div class="h-4/7 w-0.5 background-300"></div>
-					<ListMusicOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
+					<FilterOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
 				</div>
 			</div>
 		</div>
@@ -744,9 +750,19 @@
 {/snippet}
 {#snippet playerControls()}
 	<div class="items-center my-auto flex flex-col gap-1 max-md:px-4 relative">
-		<button id="settings" class="transition button-hover-class w-5 h-5 md:hidden absolute text-800 right-6 top-4.5 ">
-			<AdjustmentsVerticalOutline />
-		</button>
+		<div class="absolute flex flex-row gap-2 right-6 top-4.5 md:hidden">
+			<button onclick={toggleAutoScroll} id="autoscroll" class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled ? 'text-accent-600 dark:text-accent-dark-600' : 'text-800'} {lyricsUnsynced === 'full' ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5" disabled={lyricsUnsynced === "full"}>
+				<ListMusicOutline />
+				<span class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 text-xs">
+					{#if lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled}
+						•
+					{/if}
+				</span>
+			</button>
+			<button id="settings" class="transition button-hover-class w-5 h-5 text-800">
+				<AdjustmentsVerticalOutline />
+			</button>
+		</div>
 		<div class="flex flex-row items-center gap-3 mt-2 text-800">
 			<button id="shuffle" class="transition {loading || inactive || queue.length <= 1 ? 'button-disabled-class' : 'button-hover-class'}" onclick={shuffle} disabled={loading || inactive || queue.length <= 1}>
 				<ShuffleOutline class="w-6 h-10" />
@@ -764,10 +780,10 @@
 			<button id="skip" class="transition {inactive || hasVoteSkipped ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={skip} disabled={hasVoteSkipped}>
 				<ForwardStepSolid class="w-7 h-10" />
 				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs animate-pulse">
-							{#if hasVoteSkipped}
-								•
-							{/if}
-						</span>
+					{#if hasVoteSkipped}
+						•
+					{/if}
+				</span>
 			</button>
 			<button id="loop" class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.loop > 0 ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={loop} disabled={inactive}>
 				{#if player.loop === 2}
@@ -776,34 +792,42 @@
 					<ArrowsRepeatOutline class="w-6 h-10" />
 				{/if}
 				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs">
-							{#if player.loop > 0}
-								•
-							{/if}
-						</span>
+					{#if player.loop > 0}
+						•
+					{/if}
+				</span>
 			</button>
 		</div>
 		<div class="flex flex-row items-center w-full justify-center text-[13px] text-700">
-				<span class="w-1/12 text-end">
-					{#if player.playing?.track?.info.isStream}
-						LIVE
-					{:else}
-						{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : position.current), true)}
-					{/if}
-				</span>
+			<span class="w-1/12 text-end">
+				{#if player.playing?.track?.info.isStream}
+					LIVE
+				{:else}
+					{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : position.current), true)}
+				{/if}
+			</span>
 			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={(player.playing.track?.requesterId !== user.id && (Number(guild?.permissions ?? 0) & 0x20) === 0) || player.playing.duration === 0 || inactive || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
 			<span class="w-1/12 text-start">
-					{#if player.playing?.track?.info?.isStream}
-						-:--
-					{:else}
-						{msToTimeString(msToTime(!player.playing?.nothingPlaying ? player.playing.duration : 0), true)}
-					{/if}
-					</span>
+				{#if player.playing?.track?.info?.isStream}
+					-:--
+				{:else}
+					{msToTimeString(msToTime(!player.playing?.nothingPlaying ? player.playing.duration : 0), true)}
+				{/if}
+			</span>
 		</div>
 	</div>
 {/snippet}
 {#snippet additionalControls()}
 	<div class="flex flex-row items-center justify-end ms-auto me-6 max-md:hidden">
 		<div class="flex flex-row items-center w-full text-800">
+			<button onclick={toggleAutoScroll} id="autoscroll" class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled ? 'text-accent-600 dark:text-accent-dark-600 ' : ''} {lyricsUnsynced === 'full' ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 mr-2">
+				<ListMusicOutline />
+				<span class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 text-xs">
+					{#if lyricsUnsynced !== "full" && lyrics.autoScrollEnabled}
+						•
+					{/if}
+				</span>
+			</button>
 			<button id="settings" class="transition button-hover-class w-5 h-5 mr-2">
 				<AdjustmentsVerticalOutline />
 			</button>
@@ -912,6 +936,15 @@
 		Unmute
 	{:else}
 		Mute
+	{/if}
+</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#autoscroll">
+	{#if lyricsUnsynced === 'full'}
+		Auto-scroll unavailable
+	{:else if lyrics.autoScrollEnabled}
+		Auto-scrolling lyrics
+	{:else}
+		Auto-scroll lyrics
 	{/if}
 </Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#settings">
