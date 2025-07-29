@@ -597,6 +597,22 @@
 			states.socket.on('smartQueueFeatureUpdate', state => {
 				settings.smartqueue.enabled = state.enabled;
 			});
+			document.addEventListener('keydown', (event: KeyboardEvent) => {
+				if (event.ctrlKey && event.key === 'q' && !addTrackLoading && !inactive && !player.playing.nothingPlaying) {
+					const addTrackInput = document.getElementById('addtrack') as HTMLInputElement;
+					if (addTrackInput) {
+						addTrackInput.focus();
+						event.preventDefault();
+					}
+				}
+				if (event.ctrlKey && event.key === 'f' && !inactive) {
+					const searchQueueInput = document.getElementById('searchqueue') as HTMLInputElement;
+					if (searchQueueInput) {
+						searchQueueInput.focus();
+						event.preventDefault();
+					}
+				}
+			});
 		}
 	});
 </script>
@@ -612,12 +628,16 @@
 				<span class="font-semibold text-100 text-center text-sm">{getInitials(guild.name)}</span>
 			{/if}
 		</button>
-		<form class="relative w-full" action="#" onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}>
+		<form class="relative w-full group" action="#" onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}>
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<MusicOutline class="z-10 text-500 w-4.5 h-4.5" />
 			</div>
-			<input bind:value={addTrackValue} type="text" placeholder="Add songs..." class="input-class" disabled={addTrackLoading}>
+			<input id="addtrack" bind:value={addTrackValue} type="text" placeholder="Add songs..." class="input-class" disabled={addTrackLoading}>
 			<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
+				<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+					<kbd class="kbd-class">Ctrl</kbd>
+					<kbd class="kbd-class">Q</kbd>
+				</div>
 				<button type="reset">
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{addTrackValue ? '' : ' hidden'}" onclick={() => addTrackValue = ''} />
 				</button>
@@ -650,12 +670,16 @@
 				<span class="text-900 font-semibold text-4xl">
 					Queue
 				</span>
-			<div class="relative">
+			<div class="relative group">
 				<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 					<SearchOutline class="text-500 w-4.5 h-4.5" />
 				</div>
-				<input bind:value={queueSearchValue} type="text" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
+				<input id="searchqueue" bind:value={queueSearchValue} type="text" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
+					<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+						<kbd class="kbd-class">Ctrl</kbd>
+						<kbd class="kbd-class">F</kbd>
+					</div>
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
 					<div class="h-4/7 w-0.5 background-300"></div>
 					<FilterOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
