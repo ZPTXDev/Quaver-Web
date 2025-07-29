@@ -10,7 +10,7 @@
 		errorToast,
 		fetchGuilds,
 		fetchUser,
-		friendlyTimeString, getInitials,
+		friendlyTimeString, getGuildIconURL, getInitials,
 		hasManageServerPermissions as hasManageServerPermissionsUtil, infoToast,
 		join,
 		lazy, preload,
@@ -579,8 +579,17 @@
 </script>
 
 {#snippet trackSearch(mobile = false)}
-	<div class="relative w-full md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}">
-		<form action="#" onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}>
+	<div class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}">
+		<button id="guildicon" class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300">
+			{#if !loading && guild.icon}
+				{#key getGuildIconURL(guild)}
+					<img src="" use:lazy={getGuildIconURL(guild)} alt="Guild Icon" class="pointer-events-none h-full w-full opacity-0 transition-opacity rounded-full object-cover" />
+				{/key}
+			{:else if !loading}
+				<span class="font-semibold text-100 text-center text-sm">{getInitials(guild.name)}</span>
+			{/if}
+		</button>
+		<form class="relative w-full" action="#" onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}>
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<MusicOutline class="z-10 text-500 w-4.5 h-4.5" />
 			</div>
@@ -873,6 +882,9 @@
 		{@render volumeSlider(true)}
 	</div>
 </Dropdown>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#guildicon">
+	{guild.name ?? 'Loading...'}
+</Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#shuffle">
 	Shuffle queue
 </Tooltip>
