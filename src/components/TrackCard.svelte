@@ -7,7 +7,6 @@
 
 	let { track, position, guildId, userId, hasManageServerPermissions } = $props();
 	let isOpen = $state(false);
-	console.log(track);
 
 	function remove() {
 		if (!hasManageServerPermissions && track.requesterId !== userId) return;
