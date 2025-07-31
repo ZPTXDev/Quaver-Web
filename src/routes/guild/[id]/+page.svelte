@@ -812,19 +812,9 @@
 {/snippet}
 {#snippet playerControls()}
 	<div class="items-center my-auto flex flex-col gap-1 max-md:px-4 relative">
-		<div class="absolute flex flex-row gap-2 right-6 top-4.5 md:hidden">
-			<button onclick={toggleAutoScroll} id="autoscroll" class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled ? 'text-accent-600 dark:text-accent-dark-600' : 'text-800'} {lyricsUnsynced === 'full' ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5" disabled={lyricsUnsynced === "full"}>
-				<ListMusicOutline />
-				<span class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 text-xs">
-					{#if lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled}
-						•
-					{/if}
-				</span>
-			</button>
-			<button id="settings" class="transition button-hover-class w-5 h-5 text-800">
-				<AdjustmentsVerticalOutline />
-			</button>
-		</div>
+		<button id="settings" class="transition button-hover-class w-5 h-5 md:hidden absolute text-800 right-6 top-4.5 ">
+			<AdjustmentsVerticalOutline />
+		</button>
 		<div class="flex flex-row items-center gap-3 mt-2 text-800">
 			<button id="shuffle" class="transition {loading || inactive || queue.length <= 1 ? 'button-disabled-class' : 'button-hover-class'}" onclick={shuffle} disabled={loading || inactive || queue.length <= 1}>
 				<ShuffleOutline class="w-6 h-10" />
@@ -965,6 +955,12 @@
 			</DropdownItem>
 		{/each}
 	{/if}
+	<DropdownHeader class="py-2 md:hidden">
+		Web Settings
+	</DropdownHeader>
+	<DropdownItem class="!dropdown-item-override md:hidden">
+		<Toggle checked={lyrics.autoScrollEnabled} id="autoscroll" spanClass="!toggle-span-override" class="!toggle-override" onchange={toggleAutoScroll} disabled={lyricsUnsynced === 'full'}>Auto-scroll lyrics</Toggle>
+	</DropdownItem>
 	<DropdownDivider class="!dropdown-divider-override md:hidden" />
 	<div class="flex flex-row items-center px-4 py-2 md:hidden max-w-42 mx-auto">
 		{@render volumeSlider(true)}
