@@ -613,6 +613,7 @@
 		await loadData();
 		document.addEventListener('keydown', (event: KeyboardEvent) => {
 			if (event.ctrlKey && event.key === 'q' && !addTrackLoading) {
+				if (gsOpen) return;
 				const addTrackInput = document.getElementById('addtrack') as HTMLInputElement;
 				if (addTrackInput) {
 					addTrackInput.focus();
@@ -620,6 +621,7 @@
 				}
 			}
 			if (event.ctrlKey && event.key === 'f') {
+				if (gsOpen) return;
 				const searchQueueInput = document.getElementById('searchqueue') as HTMLInputElement;
 				if (searchQueueInput) {
 					searchQueueInput.focus();

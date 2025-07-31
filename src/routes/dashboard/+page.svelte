@@ -65,6 +65,7 @@
 		}
 		document.addEventListener('keydown', (event: KeyboardEvent) => {
 			if (event.ctrlKey && event.key === 'f') {
+				if (gsOpen) return;
 				const searchInput = document.getElementById('search') as HTMLInputElement;
 				if (searchInput) {
 					searchInput.focus();

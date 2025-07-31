@@ -47,6 +47,7 @@
 
 	onMount(() => {
 		document.addEventListener('keydown', (event) => {
+			if (!open) return;
 			if (event.key === 'ArrowDown') {
 				const currentIndex = filteredGuilds.findIndex((guild: WebGuild) => guild.id === focused);
 				if (currentIndex < filteredGuilds.length - 1) {
