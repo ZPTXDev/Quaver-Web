@@ -724,8 +724,8 @@
 	</div>
 {/snippet}
 {#snippet lyricsPanel()}
-	<div data-simplebar id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading || inactive || lyrics.noHits || lyrics.loading ? ' full-height' : ''}">
-		<div style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""} class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || lyrics.loading ? ' h-full text-center' : ''}">
+	<div data-simplebar id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading || inactive || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' full-height' : ''}">
+		<div style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""} class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' h-full text-center' : ''}">
 			{#if loading}
 				<span class="animate-pulse">
 					Grabbing the details...
@@ -733,6 +733,10 @@
 			{:else if inactive}
 				<span>
 					Lyrics will appear here when a track is playing
+				</span>
+			{:else if player.playing.track?.info.isStream}
+				<span>
+					Lyrics are not available for streams.
 				</span>
 			{:else if lyrics.noHits}
 				<span>
