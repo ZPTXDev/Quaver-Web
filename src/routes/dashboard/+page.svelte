@@ -143,7 +143,7 @@
 			{:else}
 				<span>
 					Can't find your server?
-					<button class="text-500 hover:text-300 shrink-0" onclick={(e) => {e.preventDefault(); showAllServers = true;}}>Show all servers you manage</button>
+					<button class="text-500 hover:text-300 shrink-0 cursor-pointer" onclick={(e) => {e.preventDefault(); showAllServers = true;}}>Show all servers you manage</button>
 				</span>
 			{/if}
 		</span>
