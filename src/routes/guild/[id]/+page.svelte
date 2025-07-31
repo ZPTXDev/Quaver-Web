@@ -598,14 +598,14 @@
 				settings.smartqueue.enabled = state.enabled;
 			});
 			document.addEventListener('keydown', (event: KeyboardEvent) => {
-				if (event.ctrlKey && event.key === 'q' && !addTrackLoading && !inactive && !player.playing.nothingPlaying) {
+				if (event.ctrlKey && event.key === 'q' && !addTrackLoading) {
 					const addTrackInput = document.getElementById('addtrack') as HTMLInputElement;
 					if (addTrackInput) {
 						addTrackInput.focus();
 						event.preventDefault();
 					}
 				}
-				if (event.ctrlKey && event.key === 'f' && !inactive) {
+				if (event.ctrlKey && event.key === 'f') {
 					const searchQueueInput = document.getElementById('searchqueue') as HTMLInputElement;
 					if (searchQueueInput) {
 						searchQueueInput.focus();
@@ -634,10 +634,12 @@
 			</div>
 			<input id="addtrack" bind:value={addTrackValue} type="text" placeholder="Add songs..." class="input-class" disabled={addTrackLoading}>
 			<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
-				<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
-					<kbd class="kbd-class">Ctrl</kbd>
-					<kbd class="kbd-class">Q</kbd>
-				</div>
+				{#if !addTrackValue}
+					<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+						<kbd class="kbd-class">Ctrl</kbd>
+						<kbd class="kbd-class">Q</kbd>
+					</div>
+				{/if}
 				<button type="reset">
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{addTrackValue ? '' : ' hidden'}" onclick={() => addTrackValue = ''} />
 				</button>
@@ -676,10 +678,12 @@
 				</div>
 				<input id="searchqueue" bind:value={queueSearchValue} type="text" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
-					<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
-						<kbd class="kbd-class">Ctrl</kbd>
-						<kbd class="kbd-class">F</kbd>
-					</div>
+					{#if !queueSearchValue}
+						<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+							<kbd class="kbd-class">Ctrl</kbd>
+							<kbd class="kbd-class">F</kbd>
+						</div>
+					{/if}
 					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
 					<div class="h-4/7 w-0.5 background-300"></div>
 					<FilterOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
