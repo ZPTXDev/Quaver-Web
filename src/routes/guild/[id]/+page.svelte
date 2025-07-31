@@ -635,7 +635,7 @@
 			<input id="addtrack" bind:value={addTrackValue} type="text" placeholder="Add songs..." class="input-class" disabled={addTrackLoading}>
 			<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 				{#if !addTrackValue}
-					<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+					<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none">
 						<kbd class="kbd-class">Ctrl</kbd>
 						<kbd class="kbd-class">Q</kbd>
 					</div>
@@ -679,7 +679,7 @@
 				<input id="searchqueue" bind:value={queueSearchValue} type="text" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 					{#if !queueSearchValue}
-						<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+						<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none">
 							<kbd class="kbd-class">Ctrl</kbd>
 							<kbd class="kbd-class">F</kbd>
 						</div>

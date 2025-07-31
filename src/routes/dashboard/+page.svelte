@@ -82,7 +82,7 @@
 		<input id="search" bind:value type="text" placeholder="Search servers..." class="input-class">
 		<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 			{#if !value}
-				<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+				<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none">
 					<kbd class="kbd-class">Ctrl</kbd>
 					<kbd class="kbd-class">F</kbd>
 				</div>
