@@ -62,16 +62,31 @@
 			await signout();
 			return goto('/');
 		}
+		document.addEventListener('keydown', (event: KeyboardEvent) => {
+			if (event.ctrlKey && event.key === 'f') {
+				const searchInput = document.getElementById('search') as HTMLInputElement;
+				if (searchInput) {
+					searchInput.focus();
+					event.preventDefault();
+				}
+			}
+		});
 	});
 </script>
 
 {#snippet search(mobile = false)}
-	<div class="relative w-full md:w-72 lg:w-96{mobile ? '' : ' max-md:hidden'}">
+	<div class="relative group w-full md:w-72 lg:w-96{mobile ? '' : ' max-md:hidden'}">
 		<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 			<SearchOutline class="text-500 w-4.5 h-4.5" />
 		</div>
-		<input bind:value type="text" placeholder="Search servers..." class="input-class">
+		<input id="search" bind:value type="text" placeholder="Search servers..." class="input-class">
 		<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
+			{#if !value}
+				<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center">
+					<kbd class="kbd-class">Ctrl</kbd>
+					<kbd class="kbd-class">F</kbd>
+				</div>
+			{/if}
 			<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{value ? '' : ' hidden'}" onclick={() => value = ''} />
 			<div class="h-4/7 w-0.5 background-300"></div>
 			<AdjustmentsHorizontalOutline id="settings" class="text-500 w-4.5 h-full cursor-pointer outline-0" />

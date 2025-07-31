@@ -597,23 +597,23 @@
 			states.socket.on('smartQueueFeatureUpdate', state => {
 				settings.smartqueue.enabled = state.enabled;
 			});
-			document.addEventListener('keydown', (event: KeyboardEvent) => {
-				if (event.ctrlKey && event.key === 'q' && !addTrackLoading) {
-					const addTrackInput = document.getElementById('addtrack') as HTMLInputElement;
-					if (addTrackInput) {
-						addTrackInput.focus();
-						event.preventDefault();
-					}
-				}
-				if (event.ctrlKey && event.key === 'f') {
-					const searchQueueInput = document.getElementById('searchqueue') as HTMLInputElement;
-					if (searchQueueInput) {
-						searchQueueInput.focus();
-						event.preventDefault();
-					}
-				}
-			});
 		}
+		document.addEventListener('keydown', (event: KeyboardEvent) => {
+			if (event.ctrlKey && event.key === 'q' && !addTrackLoading) {
+				const addTrackInput = document.getElementById('addtrack') as HTMLInputElement;
+				if (addTrackInput) {
+					addTrackInput.focus();
+					event.preventDefault();
+				}
+			}
+			if (event.ctrlKey && event.key === 'f') {
+				const searchQueueInput = document.getElementById('searchqueue') as HTMLInputElement;
+				if (searchQueueInput) {
+					searchQueueInput.focus();
+					event.preventDefault();
+				}
+			}
+		});
 	});
 </script>
 
