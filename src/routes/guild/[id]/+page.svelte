@@ -621,7 +621,7 @@
 	<div class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}">
 		<button id="guildicon" class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300">
 			{#if !loading && guild.icon}
-				{#key getGuildIconURL(guild)}
+				{#key guild.icon}
 					<img src="" use:lazy={getGuildIconURL(guild)} alt="Guild Icon" class="pointer-events-none h-full w-full opacity-0 transition-opacity rounded-full object-cover" />
 				{/key}
 			{:else if !loading}
