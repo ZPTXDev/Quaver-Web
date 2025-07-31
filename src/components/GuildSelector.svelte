@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { SearchOutline } from 'flowbite-svelte-icons';
-	import { getGuildIconURL, getInitials, lazy, type WebGuild } from '$lib/util';
+	import { getGuildIconURL, getInitials, lazy, scrollChildIntoView, type WebGuild } from '$lib/util';
 	import 'simplebar';
 	import 'simplebar/dist/simplebar.min.css';
 	import { onMount } from 'svelte';
@@ -24,6 +24,16 @@
 
 	function setFocused(guildId: string) {
 		focused = guildId;
+	}
+
+	function arrowFocusChange(guildId: string) {
+		setFocused(guildId);
+		const container = document.querySelector<HTMLElement>(
+			'#guildcontainer .simplebar-content-wrapper'
+		);
+		const guildElement = document.getElementById(`guild-${guildId}`);
+		if (!container || !guildElement) return;
+		scrollChildIntoView(container, guildElement, 'nearest');
 	}
 
 	function onClickEvent(e: MouseEvent, guildId: string) {
@@ -51,12 +61,12 @@
 			if (event.key === 'ArrowDown') {
 				const currentIndex = filteredGuilds.findIndex((guild: WebGuild) => guild.id === focused);
 				if (currentIndex < filteredGuilds.length - 1) {
-					setFocused(filteredGuilds[currentIndex + 1].id);
+					arrowFocusChange(filteredGuilds[currentIndex + 1].id);
 				}
 			} else if (event.key === 'ArrowUp') {
 				const currentIndex = filteredGuilds.findIndex((guild: WebGuild) => guild.id === focused);
 				if (currentIndex > 0) {
-					setFocused(filteredGuilds[currentIndex - 1].id);
+					arrowFocusChange(filteredGuilds[currentIndex - 1].id);
 				}
 			} else if (event.key === 'Enter' && focused) {
 				value = '';
@@ -86,7 +96,7 @@
 				placeholder="Search servers..."
 				class="input-class text-xl rounded-lg h-16" />
 		</div>
-		<div data-simplebar class="flex flex-col gap-2 overflow-y-scroll no-scrollbar w-full h-full">
+		<div id="guildcontainer" data-simplebar class="flex flex-col gap-2 overflow-y-scroll no-scrollbar w-full h-full">
 			{#if filteredGuilds.length === 0}
 				<div class="flex flex-col items-center justify-center h-full text-900 text-xl font-semibold mt-2">
 					No servers found :(
@@ -100,7 +110,7 @@
 				</div>
 			{:else}
 				{#each filteredGuilds as guild (guild.id)}
-					<a href={`/guild/${guild.id}`} class="flex flex-row items-center gap-3 p-3 rounded-lg{guild.id === focused ? ' background-200' : ''} transition-colors" onmouseover={() => setFocused(guild.id)} onfocus={() => setFocused(guild.id)} onclick={(e) => onClickEvent(e, guild.id)}>
+					<a id="guild-{guild.id}" href={`/guild/${guild.id}`} class="flex flex-row items-center gap-3 p-3 rounded-lg{guild.id === focused ? ' background-200' : ''} transition-colors" onmouseover={() => setFocused(guild.id)} onfocus={() => setFocused(guild.id)} onclick={(e) => onClickEvent(e, guild.id)}>
 						<div class="h-6 aspect-square shrink-0 rounded-full overflow-hidden{guild.icon ? '' : ' background-700'} flex items-center justify-center transition-colors text-center">
 							{#if guild.icon}
 								{#key guild.icon}

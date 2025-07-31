@@ -122,6 +122,30 @@ export const lazy = (image: any, src: string) => {
 		}
 	};
 }
+export const scrollChildIntoView = (
+	container: HTMLElement,
+	target: HTMLElement,
+	block: 'center' | 'nearest' = 'center'
+) => {
+	if (block === 'nearest') {
+		target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+		return;
+	}
+
+	const containerRect = container.getBoundingClientRect();
+	const targetRect = target.getBoundingClientRect();
+
+	const containerScrollTop = container.scrollTop;
+	const targetOffsetTop = targetRect.top - containerRect.top;
+
+	const offsetToCenter =
+		targetOffsetTop - containerRect.height / 2 + targetRect.height / 2;
+
+	container.scrollTo({
+		top: containerScrollTop + offsetToCenter,
+		behavior: 'smooth'
+	});
+};
 export const sortGuilds = (a: WebGuild, b: WebGuild) => {
 	if (a.botInGuild && !a.idle && b.botInGuild && b.idle) return -1;
 	if (b.botInGuild && !b.idle && a.botInGuild && a.idle) return 1;

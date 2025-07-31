@@ -7,7 +7,7 @@
 	import { state as states } from '$lib/states.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
- 	import {
+	import {
 		errorToast,
 		fetchGuilds,
 		fetchUser,
@@ -15,7 +15,7 @@
 		hasManageServerPermissions as hasManageServerPermissionsUtil, infoToast,
 		join,
 		lazy, preload,
-		request,
+		request, scrollChildIntoView,
 		signout, successToast,
 		type WebGuild,
 		type WebUser
@@ -439,21 +439,6 @@
 			}
 			player.volume = parseInt(event.detail.value);
 			currentVolume = -1;
-		});
-	}
-	function scrollChildIntoView(container: HTMLElement, target: HTMLElement) {
-		const containerRect = container.getBoundingClientRect();
-		const targetRect = target.getBoundingClientRect();
-
-		const containerScrollTop = container.scrollTop;
-		const targetOffsetTop = targetRect.top - containerRect.top;
-
-		const offsetToCenter =
-			targetOffsetTop - (containerRect.height / 2) + (targetRect.height / 2);
-
-		container.scrollTo({
-			top: containerScrollTop + offsetToCenter,
-			behavior: 'smooth'
 		});
 	}
 
