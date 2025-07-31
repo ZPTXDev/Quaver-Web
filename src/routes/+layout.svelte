@@ -13,8 +13,8 @@
 </script>
 
 {#if navigating.to || state.manualLoading}
-	<div out:fade|global={{ duration: 250 }} class="fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen overflow-hidden background-100">
-		<div transition:fade|global={{ duration: 250 }} class="fixed top-0 left-0 right-0 bottom-0 z-50 w-full h-screen overflow-hidden flex flex-col items-center justify-center">
+	<div out:fade|global={{ duration: 250 }} class="fixed top-0 left-0 right-0 bottom-0 z-[100] w-full h-screen overflow-hidden background-100">
+		<div transition:fade|global={{ duration: 250 }} class="fixed top-0 left-0 right-0 bottom-0 z-[100] w-full h-screen overflow-hidden flex flex-col items-center justify-center">
 			<div class="w-24">
 				<LogoLoading />
 			</div>

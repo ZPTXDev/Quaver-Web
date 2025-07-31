@@ -6,7 +6,8 @@
 	import { onMount } from 'svelte';
 	import { state as states } from '$lib/states.svelte';
 	import { goto } from '$app/navigation';
-	import {
+	import { page } from '$app/state';
+ 	import {
 		errorToast,
 		fetchGuilds,
 		fetchUser,
@@ -22,7 +23,7 @@
 	import { featureMap, initialWebUserState, toastOptions } from '$lib/constants';
 	import type { PageData } from './$types';
 	import { env } from '$env/dynamic/public';
-	import { Navbar, TrackCard } from '$components';
+	import { GuildSelector, Navbar, TrackCard } from '$components';
 	import { Pause, Play, Snooze } from '$components/icons';
 	import { Avatar, Checkbox, Dropdown, DropdownDivider, DropdownGroup, DropdownHeader, DropdownItem, Toggle, Tooltip } from 'flowbite-svelte';
 	import {
@@ -55,7 +56,7 @@
 	let positionUpdateInterval: any;
 	let date = new SvelteDate();
 	let guild: WebGuild = $state({} as WebGuild);
-	let user: WebUser = $state(initialWebUserState);
+	let guilds: WebGuild[] = $state([]), user: WebUser = $state(initialWebUserState);
 	let addTrackLoading = $state(false);
 	let addTrackValue = $state('');
 	let queueSearchValue = $state('');
@@ -92,6 +93,7 @@
 		autoScrollEnabled: true,
 	});
 	let loading = $state(true);
+	let gsOpen = $state(false);
 
 	let inactiveLessTimeouts = $derived(!player.connected || player.playing?.nothingPlaying);
 	let hasTimeout = $derived(player.timeout || player.pauseTimeout);
@@ -455,41 +457,12 @@
 		});
 	}
 
-	$effect(() => {
-		const interval = setInterval(() => {
-			date.setTime(Date.now());
-			if (!inactive && !position.dragging && lyricsExistsForTrack) {
-				const currentTime = position.current;
-				lyrics.text.forEach((line, index) => {
-					const nextLine = lyrics.text[index + 1];
-					if (index !== 0 && line.time === 0) return;
-					if (nextLine && currentTime >= line.time && currentTime < nextLine.time && lyrics.lastScrolledElementId !== `lyricline-${index}`) {
-						const lyricsContainer = document.querySelector<HTMLElement>(
-							'#lyrics .simplebar-content-wrapper'
-						);
-						const lyricElement = document.getElementById(`lyricline-${index}`);
-						if (lyricsContainer && lyricElement && lyrics.autoScrollEnabled) {
-							scrollChildIntoView(lyricsContainer, lyricElement);
-							lyrics.lastScrolledElementId = `lyricline-${index}`;
-						}
-					}
-				});
-			}
-		}, 100);
-
-		return () => {
-			clearInterval(interval);
-		};
-	});
-
-	onMount(async () => {
-		if (!states.socket.connected) {
-			return goto(`/?guild_id=${data.guildId}`);
-		}
+	async function loadData() {
+		loading = true;
 		try {
 			({ user } = await fetchUser(states.socket, data.token as string));
 			states.manualLoading = false;
-			let { guilds } = await fetchGuilds(states.socket, data.token as string);
+			({ guilds } = await fetchGuilds(states.socket, data.token as string));
 			if (!guilds?.some((g) => g.id === data.guildId)) {
 				return goto('/dashboard');
 			}
@@ -598,6 +571,46 @@
 				settings.smartqueue.enabled = state.enabled;
 			});
 		}
+	}
+
+	$effect(() => {
+		const interval = setInterval(() => {
+			date.setTime(Date.now());
+			if (!inactive && !position.dragging && lyricsExistsForTrack) {
+				const currentTime = position.current;
+				lyrics.text.forEach((line, index) => {
+					const nextLine = lyrics.text[index + 1];
+					if (index !== 0 && line.time === 0) return;
+					if (nextLine && currentTime >= line.time && currentTime < nextLine.time && lyrics.lastScrolledElementId !== `lyricline-${index}`) {
+						const lyricsContainer = document.querySelector<HTMLElement>(
+							'#lyrics .simplebar-content-wrapper'
+						);
+						const lyricElement = document.getElementById(`lyricline-${index}`);
+						if (lyricsContainer && lyricElement && lyrics.autoScrollEnabled) {
+							scrollChildIntoView(lyricsContainer, lyricElement);
+							lyrics.lastScrolledElementId = `lyricline-${index}`;
+						}
+					}
+				});
+			}
+		}, 100);
+
+		return () => {
+			clearInterval(interval);
+		};
+	});
+
+	$effect(() => {
+		if (page.data.guildId !== guild?.id && !loading) {
+			loadData();
+		}
+	})
+
+	onMount(async () => {
+		if (!states.socket.connected) {
+			return goto(`/?guild_id=${data.guildId}`);
+		}
+		await loadData();
 		document.addEventListener('keydown', (event: KeyboardEvent) => {
 			if (event.ctrlKey && event.key === 'q' && !addTrackLoading) {
 				const addTrackInput = document.getElementById('addtrack') as HTMLInputElement;
@@ -613,13 +626,17 @@
 					event.preventDefault();
 				}
 			}
+			if (event.ctrlKey && event.key === 'k') {
+				gsOpen = !gsOpen;
+				event.preventDefault();
+			}
 		});
 	});
 </script>
 
 {#snippet trackSearch(mobile = false)}
 	<div class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}">
-		<button id="guildicon" class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300">
+		<button onclick={() => gsOpen = true} id="guildicon" class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300 cursor-pointer">
 			{#if !loading && guild.icon}
 				{#key guild.icon}
 					<img src="" use:lazy={getGuildIconURL(guild)} alt="Guild Icon" class="pointer-events-none h-full w-full opacity-0 transition-opacity rounded-full object-cover" />
@@ -882,6 +899,8 @@
 {/snippet}
 
 <SvelteToast options={toastOptions} />
+
+<GuildSelector bind:open={gsOpen} {guilds} currentGuildId={guild.id} />
 
 <Navbar {user} centerSnippet={trackSearch} />
 

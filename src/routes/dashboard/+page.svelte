@@ -4,7 +4,7 @@
 
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { GuildCard, Navbar } from '$components';
+	import { GuildCard, GuildSelector, Navbar } from '$components';
 	import { state as states } from '$lib/states.svelte';
 	import {
 		fetchGuilds,
@@ -28,6 +28,7 @@
 	let guilds: WebGuild[] = $state([]), user: WebUser = $state(initialWebUserState);
 	let value = $state(''), showAllServers = $state(false);
 	let loading = $state(true);
+	let gsOpen = $state(false);
 	let activeGuilds = $derived(
 		guilds.filter(
 			(guild) =>
@@ -70,6 +71,10 @@
 					event.preventDefault();
 				}
 			}
+			if (event.ctrlKey && event.key === 'k') {
+				gsOpen = !gsOpen;
+				event.preventDefault();
+			}
 		});
 	});
 </script>
@@ -94,7 +99,10 @@
 	</div>
 {/snippet}
 
+<GuildSelector {guilds} bind:open={gsOpen} />
+
 <Navbar {user} centerSnippet={search} />
+
 <div class="px-4 mt-8 mb-1">
 	<h1 class="container mx-auto text-4xl font-bold tracking-tight text-900">
 		<span>{DASHBOARD_HEADLINE}</span>
