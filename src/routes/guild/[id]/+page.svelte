@@ -213,13 +213,15 @@
 	}
 	function lyricLineColor(line: { text: string, time: number }): string {
 		if (!lyrics.text || lyrics.text.length === 0) return 'text-500';
-		const nextLine: { text: string, time: number } | undefined = lyrics.text.find((l: { text: string, time: number }) => l.time > line.time);
-		if (!nextLine || position.current >= line.time && position.current < nextLine.time) {
-			return 'opacity-100';
-		} else if (position.current >= line.time) {
-			return 'opacity-40';
+		const nextLine: { text: string; time: number } | undefined =
+			lyrics.text.find((l: { text: string; time: number }) => l.time > line.time);
+		if (nextLine) {
+			if (position.current >= line.time && position.current < nextLine.time) return 'opacity-100';
+			if (position.current >= line.time) return 'opacity-40';
+			return 'opacity-60';
+		} else {
+			return position.current >= line.time ? 'opacity-100' : 'opacity-60';
 		}
-		return 'opacity-60';
 	}
 	async function artworkImgLoaded(event: Event) {
 		if (!(event.target instanceof HTMLImageElement)) return;
