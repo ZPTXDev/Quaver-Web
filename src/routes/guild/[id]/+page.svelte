@@ -275,9 +275,13 @@
 		});
 	}
 	function shuffle() {
-		if (inactive || queue.length <= 1) return;
-		states.socket.emit('update', [guild.id, { type: 'shuffle' }], (response: { status: string }) => {
-			if (response.status !== 'success') errorToast('Failed to shuffle the queue.');
+		if (inactive) return;
+		player.shuffle = !player.shuffle;
+		states.socket.emit('update', [guild.id, { type: 'shuffle', value: player.shuffle }], (response: { status: string }) => {
+			if (response.status !== 'success') {
+				player.shuffle = !player.shuffle; // revert the shuffle state
+				errorToast('Failed to shuffle the queue.');
+			}
 		});
 	}
 	function seekTo(ms: number) {
@@ -503,6 +507,9 @@
 			});
 			states.socket.on('loopUpdate', loop => {
 				player.loop = loop;
+			});
+			states.socket.on('shuffleUpdate', shuffle => {
+				player.shuffle = shuffle;
 			});
 			states.socket.on('pauseUpdate', paused => {
 				player.paused = paused;
@@ -807,8 +814,13 @@
 			<AdjustmentsVerticalOutline />
 		</button>
 		<div class="flex flex-row items-center gap-3 mt-2 text-800">
-			<button id="shuffle" class="transition {loading || inactive || queue.length <= 1 ? 'button-disabled-class' : 'button-hover-class'}" onclick={shuffle} disabled={loading || inactive || queue.length <= 1}>
+			<button id="shuffle" class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.shuffle ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={shuffle} disabled={inactive}>
 				<ShuffleOutline class="w-6 h-10" />
+				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs">
+					{#if player.shuffle}
+						•
+					{/if}
+				</span>
 			</button>
 			<button id="rewind" class="transition {!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}" onclick={rewind} disabled={!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream}>
 				<BackwardStepSolid class="w-7 h-10" />
@@ -961,7 +973,7 @@
 	{guild.name ?? 'Loading...'}
 </Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#shuffle">
-	Shuffle queue
+	Shuffle
 </Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">
 	Rewind to start
