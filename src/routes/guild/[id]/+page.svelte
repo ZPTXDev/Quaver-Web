@@ -103,9 +103,10 @@
 	let leavingInMs = $derived((player.timeout || player.pauseTimeout) - date.getTime());
 	let leavingIn = $derived(friendlyTimeString(msToTime(leavingInMs)));
 	let hasManageServerPermissions = $derived(hasManageServerPermissionsUtil(guild?.permissions));
+	let isAd = $derived(player.playing.track?.isAd === true);
 	let hasTrackPermissions = $derived(
-		player.playing.track?.requesterId === user.id
-		|| hasManageServerPermissions,
+		!isAd && (player.playing.track?.requesterId === user.id
+		|| hasManageServerPermissions),
 	);
 	let hasVoteSkipped = $derived(!inactive && player.playing.skip?.users?.includes(user.id))
 	let volume = $derived(player.volume);
@@ -267,7 +268,7 @@
 		});
 	}
 	function pausePlayPlayer() {
-		if (inactive) return;
+		if (inactive || isAd) return;
 		player.paused = !player.paused;
 		states.socket.emit('update', [guild.id, { type: 'paused', value: player.paused }], (response: { status: string }) => {
 			if (response.status !== 'success') {
@@ -288,7 +289,7 @@
 		});
 	}
 	function seekTo(ms: number) {
-		if (!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		if (!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
 		position.dragging = true;
 		position.current = ms;
 		if (player.connected && !player.playing?.nothingPlaying) {
@@ -305,7 +306,7 @@
 		}
 	}
 	function rewind() {
-		if (!hasTrackPermissions || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		if (!hasTrackPermissions || isAd || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
 		position.dragging = true;
 		position.current = 0;
 		if (player.connected && !player.playing?.nothingPlaying) {
@@ -784,8 +785,8 @@
 				<img crossorigin="anonymous" src="" use:lazy={player.playing.track?.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-24 h-24 rounded-l-2xl object-cover shrink-0" onload={artworkImgLoaded} />
 			{/key}
 			<div class="flex flex-col justify-center truncate pe-4">
-				<span class="text-900 font-semibold text-lg truncate">{player.playing.track?.info.title}</span>
-				<span class="text-700 text-sm">{player.playing.track?.info.author}</span>
+				<span class="text-900 font-semibold text-lg truncate">{isAd ? 'Ad Break' : player.playing.track?.info.title}</span>
+				<span class="text-700 text-sm">{isAd ? 'Please wait...' : player.playing.track?.info.author}</span>
 			</div>
 		{:else if !settings?.stay?.enabled && hasTimeout || !player.connected || loading}
 			<div class="flex flex-col justify-center truncate ps-8 pe-4">
@@ -825,17 +826,17 @@
 					{/if}
 				</span>
 			</button>
-			<button id="rewind" class="transition {!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}" onclick={rewind} disabled={!hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream}>
+			<button id="rewind" class="transition {!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}" onclick={rewind} disabled={!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream}>
 				<BackwardStepSolid class="w-7 h-10" />
 			</button>
-			<button id="pauseplay" class="w-10 h-10 transition {inactive ? 'button-disabled-class' : 'button-hover-class'}" onclick={pausePlayPlayer} disabled={inactive}>
+			<button id="pauseplay" class="w-10 h-10 transition {inactive || isAd ? 'button-disabled-class' : 'button-hover-class'}" onclick={pausePlayPlayer} disabled={inactive || isAd}>
 				{#if !player.paused && !hasTimeout}
 					<Pause primaryClass="fill-text-200 dark:fill-text-dark-200" secondaryClass="fill-background-700 dark:fill-background-dark-700" />
 				{:else}
 					<Play primaryClass="fill-text-200 dark:fill-text-dark-200" secondaryClass="fill-background-700 dark:fill-background-dark-700" />
 				{/if}
 			</button>
-			<button id="skip" class="transition {inactive || hasVoteSkipped ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={skip} disabled={hasVoteSkipped}>
+			<button id="skip" class="transition {inactive || hasVoteSkipped || isAd ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={skip} disabled={hasVoteSkipped || isAd}>
 				<ForwardStepSolid class="w-7 h-10" />
 				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs animate-pulse">
 					{#if hasVoteSkipped}
@@ -864,7 +865,7 @@
 					{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : position.current), true)}
 				{/if}
 			</span>
-			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={!hasTrackPermissions || player.playing.duration === 0 || inactive || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
+			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={!hasTrackPermissions || player.playing.duration === 0 || inactive || isAd || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
 			<span class="w-1/12 text-start">
 				{#if player.playing?.track?.info?.isStream}
 					-:--
@@ -946,10 +947,10 @@
 		Filters
 	</DropdownHeader>
 	<DropdownItem class="!dropdown-item-override">
-		<Toggle checked={player.filters?.bassboost} spanClass="!toggle-span-override" class="!toggle-override" onchange={bassboostToggle} disabled={inactive}>Bass Boost</Toggle>
+		<Toggle checked={player.filters?.bassboost} spanClass="!toggle-span-override" class="!toggle-override" onchange={bassboostToggle} disabled={inactive || isAd}>Bass Boost</Toggle>
 	</DropdownItem>
 	<DropdownItem class="!dropdown-item-override">
-		<Toggle checked={player.filters?.nightcore} spanClass="!toggle-span-override" class="!toggle-override" onchange={nightcoreToggle} disabled={inactive}>Nightcore</Toggle>
+		<Toggle checked={player.filters?.nightcore} spanClass="!toggle-span-override" class="!toggle-override" onchange={nightcoreToggle} disabled={inactive || isAd}>Nightcore</Toggle>
 	</DropdownItem>
 	{#if !loading && Object.keys(settings).length > 0}
 		<DropdownHeader class="py-2">
