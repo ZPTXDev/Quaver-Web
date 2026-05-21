@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 	import { SearchOutline } from 'flowbite-svelte-icons';
 	import { getGuildIconURL, getInitials, lazy, scrollChildIntoView, type WebGuild } from '$lib/util';
 	import 'simplebar';
@@ -82,8 +82,8 @@
 </script>
 
 {#if open}
-	<div role="button" tabindex="-1" transition:fade={{duration: 150}} class="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black opacity-75 z-40" onclick={reset} onkeydown={reset}></div>
-	<div transition:fade={{duration: 150}} class="fixed top-1/2 left-1/2 transform -translate-1/2 flex flex-col gap-4 items-center justify-center background-300 rounded-lg z-50 p-4 w-[calc(100%-4rem)] max-w-[680px] h-full max-h-96">
+	<div role="button" tabindex="-1" transition:fade={{duration: 200}} class="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/60 backdrop-blur-md z-40" onclick={reset} onkeydown={reset}></div>
+	<div transition:scale={{duration: 200, start: 0.95}} class="fixed top-1/2 left-1/2 transform -translate-1/2 flex flex-col gap-4 items-center justify-center background-300 rounded-lg z-50 p-4 w-[calc(100%-4rem)] max-w-[680px] h-full max-h-96">
 		<div class="relative w-full">
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<SearchOutline class="text-500 w-5 h-5" />

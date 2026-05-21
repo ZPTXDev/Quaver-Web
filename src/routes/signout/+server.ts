@@ -7,11 +7,11 @@ export const POST = (({ cookies, url }) => {
 	if (redirectID)
 		cookies.set('redirect', redirectID, {
 			path: '/',
-			secure: env.PRIVATE_SECURE?.toLowerCase() === 'true' ?? false
+			secure: env.PRIVATE_SECURE?.toLowerCase() === 'true'
 		});
 	cookies.delete('token', {
 		path: '/',
-		secure: env.PRIVATE_SECURE?.toLowerCase() === 'true' ?? false
+		secure: env.PRIVATE_SECURE?.toLowerCase() === 'true'
 	});
 	return json({ success: true });
 }) as RequestHandler;

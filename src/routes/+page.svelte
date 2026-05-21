@@ -24,7 +24,8 @@
 				return goto(`/guild/${guildId}`);
 			}
 			if (data.redirect) {
-				return goto(`/guild/${data.redirect}`);
+				const target = data.redirect.startsWith('/') ? data.redirect : `/guild/${data.redirect}`;
+				return goto(target);
 			}
 			return goto('/dashboard');
 		}
@@ -43,7 +44,13 @@
 					headers: { 'content-type': 'application/json' },
 				});
 				const json = await result.json();
-				if (json.success) return(goto('/dashboard'));
+				if (json.success) {
+					if (data.redirect) {
+						const target = data.redirect.startsWith('/') ? data.redirect : `/guild/${data.redirect}`;
+						return goto(target);
+					}
+					return goto('/dashboard');
+				}
 				return goto('/');
 			}
 		);
@@ -82,7 +89,7 @@
 						Sign in to continue to Quaver's Dashboard
 					</h2>
 					<div class="flex flex-row mt-6 justify-center w-full min-w-xs">
-						<Button href={code || !connected ? '' : authURL} class="text-center font-medium focus:ring-4 focus:outline-none inline-flex items-center justify-center align-middle mx-auto w-full py-3 text-sm text-white !bg-[#5865F2] hover:!bg-[#3b5998] focus:!ring-[#5865F2]/50 dark:focus:!ring-[#5865F2]/55 rounded-lg{code || !connected ? ' cursor-not-allowed opacity-50' : ''}">
+						<Button href={code || !connected ? '' : authURL} class="text-center font-medium focus:ring-4 focus:outline-none inline-flex items-center justify-center align-middle mx-auto w-full py-3 text-sm text-white !bg-[#5865F2] hover:!bg-[#3b5998] focus:!ring-[#5865F2]/50 dark:focus:!ring-[#5865F2]/55 rounded-lg {code || !connected ? ' cursor-not-allowed opacity-50' : ''}">
 							{#if !code && connected}
 								<img src={DiscordLogo} class="mr-2 -ml-1 w-4 h-4" alt="Discord Logo" />
 								Sign in with Discord

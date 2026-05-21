@@ -7,8 +7,10 @@
 	import { LogoLoading } from '$components/icons';
 
 	if (page.url.pathname !== '/') state.manualLoading = true;
-	beforeNavigate(() => {
-		state.manualLoading = true;
+	beforeNavigate((navigation) => {
+		if (navigation.to?.url.pathname !== navigation.from?.url.pathname) {
+			state.manualLoading = true;
+		}
 	});
 </script>
 

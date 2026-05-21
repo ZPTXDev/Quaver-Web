@@ -69,6 +69,7 @@
 		paused: true,
 		loop: 0,
 		volume: 100,
+		shuffle: false,
 	});
 	let settings: any = $state({});
 	let position = $state({
@@ -975,7 +976,11 @@
 	{guild.name ?? 'Loading...'}
 </Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#shuffle">
+{#if player.shuffle}
+		Shuffle enabled
+	{:else}
 	Shuffle
+{/if}
 </Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">
 	Rewind to start
