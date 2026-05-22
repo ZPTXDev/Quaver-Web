@@ -1,7 +1,3 @@
-<svelte:head>
-	<title>{guild.name ?? "Loading..."} | Quaver</title>
-</svelte:head>
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { state as states } from '$lib/states.svelte';
@@ -273,7 +269,11 @@
 		states.socket.emit('update', [guild.id, { type: 'paused', value: player.paused }], (response: { status: string }) => {
 			if (response.status !== 'success') {
 				player.paused = !player.paused; // revert the pause state
-				errorToast(`Failed to ${player.paused ? 'pause' : 'resume'} the player.`);
+				if (response.status === 'error-ad-playing') {
+					errorToast(`Cannot ${player.paused ? 'resume' : 'pause'} the player while an ad is playing.`);
+				} else {
+					errorToast(`Failed to ${player.paused ? 'pause' : 'resume'} the player.`);
+				}
 				return;
 			}
 		});
@@ -297,7 +297,11 @@
 				if (response.status !== 'success') {
 					position.current = position.lastKnown;
 					position.dragging = false;
-					errorToast('Failed to rewind the track.');
+					if (response.status === 'error-ad-playing') {
+						errorToast('Cannot seek while an ad is playing.');
+					} else {
+						errorToast('Failed to rewind the track.');
+					}
 					return;
 				}
 				position.lastKnown = position.current;
@@ -314,7 +318,11 @@
 				if (response.status !== 'success') {
 					position.current = position.lastKnown;
 					position.dragging = false;
-					errorToast('Failed to rewind the track.');
+					if (response.status === 'error-ad-playing') {
+						errorToast('Cannot seek while an ad is playing.');
+					} else {
+						errorToast('Failed to rewind the track.');
+					}
 					return;
 				}
 				position.lastKnown = position.current;
@@ -325,7 +333,13 @@
 	function skip() {
 		if (hasVoteSkipped) return;
 		states.socket.emit('update', [guild.id, { type: 'skip' }], (response: { status: string }) => {
-			if (response.status !== 'success') errorToast('Failed to skip the track.');
+			if (response.status !== 'success') {
+				if (response.status === 'error-ad-playing') {
+					errorToast('Cannot skip while an ad is playing.');
+				} else {
+					errorToast('Failed to skip the track.');
+				}
+			}
 		});
 	}
 	function loop() {
@@ -693,31 +707,62 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{guild.name ?? "Loading..."} | Quaver</title>
+</svelte:head>
+
 {#snippet trackSearch(mobile = false)}
-	<div class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}">
-		<button onclick={() => gsOpen = true} id="guildicon" class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300 cursor-pointer">
+	<div
+		class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}"
+	>
+		<button
+			onclick={() => gsOpen = true}
+			id="guildicon"
+			class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300 cursor-pointer"
+		>
 			{#if !loading && guild.icon}
 				{#key guild.icon}
-					<img src="" use:lazy={getGuildIconURL(guild)} alt="Guild Icon" class="pointer-events-none h-full w-full opacity-0 transition-opacity rounded-full object-cover" />
+					<img
+						src=""
+						use:lazy={getGuildIconURL(guild)}
+						alt="Guild Icon"
+						class="pointer-events-none h-full w-full opacity-0 transition-opacity rounded-full object-cover"
+					/>
 				{/key}
 			{:else if !loading}
 				<span class="font-semibold text-100 text-center text-sm">{getInitials(guild.name)}</span>
 			{/if}
 		</button>
-		<form class="relative w-full group" action="#" onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}>
+		<form
+			class="relative w-full group"
+			action="#"
+			onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}
+		>
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<MusicOutline class="z-10 text-500 w-4.5 h-4.5" />
 			</div>
-			<input id="addtrack" bind:value={addTrackValue} type="text" placeholder="Add songs..." class="input-class" disabled={addTrackLoading}>
+			<input
+				id="addtrack"
+				bind:value={addTrackValue}
+				type="text"
+				placeholder="Add songs..."
+				class="input-class"
+				disabled={addTrackLoading}
+			/>
 			<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 				{#if !addTrackValue}
-					<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none">
+					<div
+						class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none"
+					>
 						<kbd class="kbd-class">Ctrl</kbd>
 						<kbd class="kbd-class">Q</kbd>
 					</div>
 				{/if}
 				<button type="reset">
-					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{addTrackValue ? '' : ' hidden'}" onclick={() => addTrackValue = ''} />
+					<CloseOutline
+						class="text-500 w-4.5 h-full cursor-pointer{addTrackValue ? '' : ' hidden'}"
+						onclick={() => addTrackValue = ''}
+					/>
 				</button>
 				<div class="h-4/7 w-0.5 background-300"></div>
 				<button type="submit">
@@ -728,10 +773,20 @@
 	</div>
 {/snippet}
 {#snippet lyricLine(line: { text: string, time: number }, index: number)}
-	<button onclick={() => lyricsUnsynced === 'full' ? undefined : seekTo(line.time)} id="lyricline-{index}" class="transition-opacity {lyricLineColor(line)} text-start{lyricsUnsynced === 'full' || !hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? '' : ' hover:cursor-pointer hover:opacity-100'}">{line.text}</button>
+	<button
+		onclick={() => lyricsUnsynced === 'full' ? undefined : seekTo(line.time)}
+		id="lyricline-{index}"
+		class="transition-opacity {lyricLineColor(line)} text-start{lyricsUnsynced === 'full' || !hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? '' : ' hover:cursor-pointer hover:opacity-100'}"
+		>{line.text}</button
+	>
 {/snippet}
 {#snippet volumeSlider(mobile = false)}
-	<button id="mute" class="transition {!inVoiceChannel ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 -mr-0.5" onclick={mute} disabled={!inVoiceChannel}>
+	<button
+		id="mute"
+		class="transition {!inVoiceChannel ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 -mr-0.5"
+		onclick={mute}
+		disabled={!inVoiceChannel}
+	>
 		{#if (currentVolume !== -1 ? currentVolume : volume) >= 50}
 			<VolumeUpOutline />
 		{:else if (currentVolume !== -1 ? currentVolume : volume) > 0}
@@ -740,42 +795,82 @@
 			<VolumeMuteOutline />
 		{/if}
 	</button>
-	<RangeSlider class="{mobile ? 'w-full' : 'max-w-24 w-24'} text-[10px] slider" range="min" float formatter={volumeFormatter} min={0} max={100} value={currentVolume !== -1 ? currentVolume : volume} disabled={!inVoiceChannel} on:start={volumeDragStarted} on:change={volumeDragChanged} on:stop={volumeDragStopped} />
+	<RangeSlider
+		class="{mobile ? 'w-full' : 'max-w-24 w-24'} text-[10px] slider"
+		range="min"
+		float
+		formatter={volumeFormatter}
+		min={0}
+		max={100}
+		value={currentVolume !== -1 ? currentVolume : volume}
+		disabled={!inVoiceChannel}
+		on:start={volumeDragStarted}
+		on:change={volumeDragChanged}
+		on:stop={volumeDragStopped}
+	/>
 {/snippet}
 {#snippet queuePanel()}
-	<div class="background-200 rounded-xl col-span-1 shadow-lg overflow-y-hidden max-md:aspect-square">
+	<div
+		class="background-200 rounded-xl col-span-1 shadow-lg overflow-y-hidden max-md:aspect-square"
+	>
 		<div class="flex flex-col gap-4 p-8 pb-4">
-				<span class="text-900 font-semibold text-4xl">
-					Queue
-				</span>
+			<span class="text-900 font-semibold text-4xl"> Queue </span>
 			<div class="relative group">
 				<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 					<SearchOutline class="text-500 w-4.5 h-4.5" />
 				</div>
-				<input id="searchqueue" bind:value={queueSearchValue} type="text" placeholder="Search queue..." class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]" />
+				<input
+					id="searchqueue"
+					bind:value={queueSearchValue}
+					type="text"
+					placeholder="Search queue..."
+					class="input-class rounded-lg bg-[#C7BDCD] dark:bg-[#3A303F]"
+				/>
 				<div class="absolute inset-y-0 end-0 flex items-center pe-3 gap-1.5 h-full">
 					{#if !queueSearchValue}
-						<div class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none">
+						<div
+							class="not-group-hover:opacity-0 opacity-100 transition-opacity items-center pointer-events-none"
+						>
 							<kbd class="kbd-class">Ctrl</kbd>
 							<kbd class="kbd-class">F</kbd>
 						</div>
 					{/if}
-					<CloseOutline class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}" onclick={() => queueSearchValue = ''} />
+					<CloseOutline
+						class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}"
+						onclick={() => queueSearchValue = ''}
+					/>
 					<div class="h-4/7 w-0.5 background-300"></div>
 					<FilterOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
 				</div>
 			</div>
 		</div>
-		<div data-simplebar class="flex flex-col overflow-y-scroll pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)] no-scrollbar">
+		<div
+			data-simplebar
+			class="flex flex-col overflow-y-scroll pt-0 p-8 h-[calc(100%-150px)] md:h-[calc(100%-142px)] no-scrollbar"
+		>
 			{#if !player.playing?.nothingPlaying}
-				<TrackCard track={player.playing.track} position={0} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
+				<TrackCard
+					track={player.playing.track}
+					position={0}
+					guildId={guild.id}
+					userId={user.id}
+					{hasManageServerPermissions}
+				/>
 				<div class="h-[1px] background-400 mx-auto my-4"></div>
 				{#each queue as track, i}
-					<TrackCard {track} position={i + 1} guildId={guild.id} userId={user.id} {hasManageServerPermissions} />
+					<TrackCard
+						{track}
+						position={i + 1}
+						guildId={guild.id}
+						userId={user.id}
+						{hasManageServerPermissions}
+					/>
 				{/each}
 			{/if}
 			{#if player.playing?.nothingPlaying || queue.length === 0}
-				<div class="flex flex-col items-center justify-center text-center h-full{player.playing?.nothingPlaying ? ' mt-4' : ''}">
+				<div
+					class="flex flex-col items-center justify-center text-center h-full{player.playing?.nothingPlaying ? ' mt-4' : ''}"
+				>
 					<span class="text-900 font-semibold text-2xl">
 						{player.playing?.nothingPlaying
 							? "Nothing's playing right now"
@@ -796,29 +891,27 @@
 	</div>
 {/snippet}
 {#snippet lyricsPanel()}
-	<div data-simplebar id="lyrics" style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""} class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : '' }rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading || inactive || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' full-height' : ''}">
-		<div style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""} class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' h-full text-center' : ''}">
+	<div
+		data-simplebar
+		id="lyrics"
+		style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""}
+		class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : ''}rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading || inactive || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' full-height' : ''}"
+	>
+		<div
+			style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""}
+			class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' h-full text-center' : ''}"
+		>
 			{#if loading}
-				<span class="animate-pulse">
-					Grabbing the details...
-				</span>
+				<span class="animate-pulse"> Grabbing the details... </span>
 			{:else if inactive}
-				<span>
-					Lyrics will appear here when a track is playing
-				</span>
+				<span> Lyrics will appear here when a track is playing </span>
 			{:else if player.playing.track?.info.isStream}
-				<span>
-					Lyrics are not available for streams.
-				</span>
+				<span> Lyrics are not available for streams. </span>
 			{:else if lyrics.noHits}
-				<span>
-					No lyrics found for this track...
-				</span>
+				<span> No lyrics found for this track... </span>
 				<span>:(</span>
 			{:else if lyrics.loading}
-				<span class="animate-pulse">
-					Get ready to sing...
-				</span>
+				<span class="animate-pulse"> Get ready to sing... </span>
 			{:else if lyricsExistsForTrack}
 				{#if lyricsUnsynced === 'full'}
 					<span class="opacity-50 text-sm">
@@ -833,7 +926,12 @@
 					{@render lyricLine(line, i)}
 				{/each}
 				<span class="opacity-50 text-sm">
-					Lyrics provided by <a href="https://lrclib.net" target="_blank" rel="noopener noreferrer" class="opacity-80 hover:underline">LRCLIB</a>
+					Lyrics provided by <a
+						href="https://lrclib.net"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="opacity-80 hover:underline">LRCLIB</a
+					>
 				</span>
 			{/if}
 		</div>
@@ -843,22 +941,33 @@
 	<div class="w-full my-auto justify-self-start flex flex-row gap-4 truncate max-md:hidden">
 		{#if !loading && !inactiveLessTimeouts && !player.pauseTimeout}
 			{#key player.playing.track?.info.artworkUrl}
-				<img crossorigin="anonymous" src="" use:lazy={player.playing.track?.info.artworkUrl} alt="Album Artwork" class="opacity-0 transition-opacity w-24 h-24 rounded-l-2xl object-cover shrink-0" onload={artworkImgLoaded} />
+				<img
+					crossorigin="anonymous"
+					src=""
+					use:lazy={player.playing.track?.info.artworkUrl}
+					alt="Album Artwork"
+					class="opacity-0 transition-opacity w-24 h-24 rounded-l-2xl object-cover shrink-0"
+					onload={artworkImgLoaded}
+				/>
 			{/key}
 			<div class="flex flex-col justify-center truncate pe-4">
-				<span class="text-900 font-semibold text-lg truncate">{isAd ? 'Ad Break' : player.playing.track?.info.title}</span>
-				<span class="text-700 text-sm">{isAd ? 'Please wait...' : player.playing.track?.info.author}</span>
+				<span class="text-900 font-semibold text-lg truncate"
+					>{isAd ? 'Ad Break' : player.playing.track?.info.title}</span
+				>
+				<span class="text-700 text-sm"
+					>{isAd ? 'Please wait...' : player.playing.track?.info.author}</span
+				>
 			</div>
 		{:else if !settings?.stay?.enabled && hasTimeout || !player.connected || loading}
 			<div class="flex flex-col justify-center truncate ps-8 pe-4">
-						<span class="text-900 font-semibold inline-flex items-center gap-2 text-lg truncate">
-							{#if loading || Object.keys(settings).length === 0}
-								<div class="h-4 rounded-full background-700 w-32 animate-pulse"></div>
-							{:else}
-								{!settings?.stay?.enabled && hasTimeout ? "Idle" : "Sleeping"}
-								<Snooze class="w-4 h-4 fill-text-900 dark:fill-text-dark-900" />
-							{/if}
-						</span>
+				<span class="text-900 font-semibold inline-flex items-center gap-2 text-lg truncate">
+					{#if loading || Object.keys(settings).length === 0}
+						<div class="h-4 rounded-full background-700 w-32 animate-pulse"></div>
+					{:else}
+						{!settings?.stay?.enabled && hasTimeout ? "Idle" : "Sleeping"}
+						<Snooze class="w-4 h-4 fill-text-900 dark:fill-text-dark-900" />
+					{/if}
+				</span>
 				<span class="text-700 text-sm">
 					{#if loading || Object.keys(settings).length === 0}
 						<div class="h-3 rounded-full background-700 w-64 animate-pulse mt-2.5"></div>
@@ -875,11 +984,19 @@
 {/snippet}
 {#snippet playerControls()}
 	<div class="items-center my-auto flex flex-col gap-1 max-md:px-4 relative">
-		<button id="settings" class="transition button-hover-class w-5 h-5 md:hidden absolute text-800 right-6 top-4.5 ">
+		<button
+			id="settings"
+			class="transition button-hover-class w-5 h-5 md:hidden absolute text-800 right-6 top-4.5"
+		>
 			<AdjustmentsVerticalOutline />
 		</button>
 		<div class="flex flex-row items-center gap-3 mt-2 text-800">
-			<button id="shuffle" class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.shuffle ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={shuffle} disabled={inactive}>
+			<button
+				id="shuffle"
+				class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.shuffle ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative"
+				onclick={shuffle}
+				disabled={inactive}
+			>
 				<ShuffleOutline class="w-6 h-10" />
 				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs">
 					{#if player.shuffle}
@@ -887,25 +1004,53 @@
 					{/if}
 				</span>
 			</button>
-			<button id="rewind" class="transition {!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}" onclick={rewind} disabled={!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream}>
+			<button
+				id="rewind"
+				class="transition {!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}"
+				onclick={rewind}
+				disabled={!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream}
+			>
 				<BackwardStepSolid class="w-7 h-10" />
 			</button>
-			<button id="pauseplay" class="w-10 h-10 transition {inactive || isAd ? 'button-disabled-class' : 'button-hover-class'}" onclick={pausePlayPlayer} disabled={inactive || isAd}>
+			<button
+				id="pauseplay"
+				class="w-10 h-10 transition {inactive || isAd ? 'button-disabled-class' : 'button-hover-class'}"
+				onclick={pausePlayPlayer}
+				disabled={inactive || isAd}
+			>
 				{#if !player.paused && !hasTimeout}
-					<Pause primaryClass="fill-text-200 dark:fill-text-dark-200" secondaryClass="fill-background-700 dark:fill-background-dark-700" />
+					<Pause
+						primaryClass="fill-text-200 dark:fill-text-dark-200"
+						secondaryClass="fill-background-700 dark:fill-background-dark-700"
+					/>
 				{:else}
-					<Play primaryClass="fill-text-200 dark:fill-text-dark-200" secondaryClass="fill-background-700 dark:fill-background-dark-700" />
+					<Play
+						primaryClass="fill-text-200 dark:fill-text-dark-200"
+						secondaryClass="fill-background-700 dark:fill-background-dark-700"
+					/>
 				{/if}
 			</button>
-			<button id="skip" class="transition {inactive || hasVoteSkipped || isAd ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={skip} disabled={hasVoteSkipped || isAd}>
+			<button
+				id="skip"
+				class="transition {inactive || hasVoteSkipped || isAd ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative"
+				onclick={skip}
+				disabled={hasVoteSkipped || isAd}
+			>
 				<ForwardStepSolid class="w-7 h-10" />
-				<span class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs animate-pulse">
+				<span
+					class="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 text-xs animate-pulse"
+				>
 					{#if hasVoteSkipped}
 						•
 					{/if}
 				</span>
 			</button>
-			<button id="loop" class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.loop > 0 ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative" onclick={loop} disabled={inactive}>
+			<button
+				id="loop"
+				class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.loop > 0 ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative"
+				onclick={loop}
+				disabled={inactive}
+			>
 				{#if player.loop === 2}
 					<ArrowsRepeatCountOutline class="w-6 h-10" />
 				{:else}
@@ -926,7 +1071,19 @@
 					{msToTimeString(msToTime(player.playing.nothingPlaying ? 0 : position.current), true)}
 				{/if}
 			</span>
-			<RangeSlider class="w-10/12 text-xs slider" range="min" float formatter={positionFormatter} min={0} max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration} value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current} disabled={!hasTrackPermissions || player.playing.duration === 0 || inactive || isAd || player.playing.track?.info.isStream} on:start={positionDragStarted} on:change={positionDragChanged} on:stop={positionDragStopped} />
+			<RangeSlider
+				class="w-10/12 text-xs slider"
+				range="min"
+				float
+				formatter={positionFormatter}
+				min={0}
+				max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration}
+				value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current}
+				disabled={!hasTrackPermissions || player.playing.duration === 0 || inactive || isAd || player.playing.track?.info.isStream}
+				on:start={positionDragStarted}
+				on:change={positionDragChanged}
+				on:stop={positionDragStopped}
+			/>
 			<span class="w-1/12 text-start">
 				{#if player.playing?.track?.info?.isStream}
 					-:--
@@ -940,7 +1097,11 @@
 {#snippet additionalControls()}
 	<div class="flex flex-row items-center justify-end ms-auto me-6 max-md:hidden">
 		<div class="flex flex-row items-center w-full text-800">
-			<button onclick={toggleAutoScroll} id="autoscroll" class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled ? 'text-accent-600 dark:text-accent-dark-600 ' : ''} {lyricsUnsynced === 'full' ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 mr-2">
+			<button
+				onclick={toggleAutoScroll}
+				id="autoscroll"
+				class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled ? 'text-accent-600 dark:text-accent-dark-600 ' : ''} {lyricsUnsynced === 'full' ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 mr-2"
+			>
 				<ListMusicOutline />
 				<span class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 text-xs">
 					{#if lyricsUnsynced !== "full" && lyrics.autoScrollEnabled}
@@ -963,14 +1124,20 @@
 <Navbar {user} centerSnippet={trackSearch} />
 
 <div class="px-4 flex flex-col gap-4 h-full md:h-[calc(100dvh-96px)] max-md:pb-32">
-	<div class="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grow md:h-[calc(100dvh-208px)]">
+	<div
+		class="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grow md:h-[calc(100dvh-208px)]"
+	>
 		<!-- for mobile view -->
 		{@render trackSearch(true)}
 		{@render queuePanel()}
 		{@render lyricsPanel()}
 	</div>
-	<div class="md:container md:mx-auto max-md:w-full max-md:-ml-4 max-sm:px-8 max-md:px-16 h-24 flex flex-row gap-2 relative max-md:fixed max-md:bottom-4">
-		<div class="background-200 w-full rounded-2xl grid grid-cols-1 md:grid-cols-3 justify-center shadow-lg">
+	<div
+		class="md:container md:mx-auto max-md:w-full max-md:-ml-4 max-sm:px-8 max-md:px-16 h-24 flex flex-row gap-2 relative max-md:fixed max-md:bottom-4"
+	>
+		<div
+			class="background-200 w-full rounded-2xl grid grid-cols-1 md:grid-cols-3 justify-center shadow-lg"
+		>
 			{@render activeTrackCard()}
 			{@render playerControls()}
 			{@render additionalControls()}
@@ -979,13 +1146,16 @@
 </div>
 
 <Dropdown simple offset={10} triggeredBy="#filter" class="!dropdown-override">
-	<DropdownHeader class="py-2">
-		Filter by requester
-	</DropdownHeader>
+	<DropdownHeader class="py-2">Filter by requester</DropdownHeader>
 	<DropdownGroup class="!dropdown-group-override">
 		{#each uniqueRequesterTracks.toSorted((a: any, b: any) => a.requesterTag.localeCompare(b.requesterTag)) as track}
 			<DropdownItem class="!dropdown-item-override flex flex-row items-center gap-2">
-				<Checkbox checked={queueSearchFilterIds.includes(track.requesterId)} value={track.requesterId} class="!h-full !w-full !checkbox-override focus:ring-0" onchange={queueSearchFilterUpdated} />
+				<Checkbox
+					checked={queueSearchFilterIds.includes(track.requesterId)}
+					value={track.requesterId}
+					class="!h-full !w-full !checkbox-override focus:ring-0"
+					onchange={queueSearchFilterUpdated}
+				/>
 				{#if track.requesterAvatar}
 					{#await preload(`https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png`) then source}
 						<Avatar src={source} size="xs">
@@ -993,41 +1163,66 @@
 						</Avatar>
 					{/await}
 				{/if}
-				<span class="font-semibold tracking-tight text-black dark:text-white">{track.requesterTag}</span>
+				<span class="font-semibold tracking-tight text-black dark:text-white"
+					>{track.requesterTag}</span
+				>
 			</DropdownItem>
 		{/each}
 		{#if uniqueRequesterTracks.length === 0}
-			<DropdownItem class="!dropdown-item-override !background-200 hover:!background-200 !text-900 hover:!text-900">
+			<DropdownItem
+				class="!dropdown-item-override !background-200 hover:!background-200 !text-900 hover:!text-900"
+			>
 				The queue is empty.
 			</DropdownItem>
 		{/if}
 	</DropdownGroup>
 </Dropdown>
 <Dropdown offset={15} simple triggeredBy="#settings" class="!dropdown-override">
-	<DropdownHeader class="py-2">
-		Filters
-	</DropdownHeader>
+	<DropdownHeader class="py-2">Filters</DropdownHeader>
 	<DropdownItem class="!dropdown-item-override">
-		<Toggle checked={player.filters?.bassboost} spanClass="!toggle-span-override" class="!toggle-override" onchange={bassboostToggle} disabled={inactive || isAd}>Bass Boost</Toggle>
+		<Toggle
+			checked={player.filters?.bassboost}
+			spanClass="!toggle-span-override"
+			class="!toggle-override"
+			onchange={bassboostToggle}
+			disabled={inactive || isAd}>Bass Boost</Toggle
+		>
 	</DropdownItem>
 	<DropdownItem class="!dropdown-item-override">
-		<Toggle checked={player.filters?.nightcore} spanClass="!toggle-span-override" class="!toggle-override" onchange={nightcoreToggle} disabled={inactive || isAd}>Nightcore</Toggle>
+		<Toggle
+			checked={player.filters?.nightcore}
+			spanClass="!toggle-span-override"
+			class="!toggle-override"
+			onchange={nightcoreToggle}
+			disabled={inactive || isAd}>Nightcore</Toggle
+		>
 	</DropdownItem>
 	{#if !loading && Object.keys(settings).length > 0}
-		<DropdownHeader class="py-2">
-			Settings
-		</DropdownHeader>
+		<DropdownHeader class="py-2">Settings</DropdownHeader>
 		{#each Object.keys(settings) as key}
 			<DropdownItem class="!dropdown-item-override">
-				<Toggle checked={settings[key].enabled} id={key} spanClass="!toggle-span-override" class="!toggle-override" onchange={settingsToggle} disabled={['autolyrics', 'smartqueue'].includes(key) && !hasManageServerPermissions || key === 'stay' && inactive}>{featureMap[key].name}</Toggle>
+				<Toggle
+					checked={settings[key].enabled}
+					id={key}
+					spanClass="!toggle-span-override"
+					class="!toggle-override"
+					onchange={settingsToggle}
+					disabled={['autolyrics', 'smartqueue'].includes(key) && !hasManageServerPermissions || key === 'stay' && inactive}
+					>{featureMap[key].name}</Toggle
+				>
 			</DropdownItem>
 		{/each}
 	{/if}
-	<DropdownHeader class="py-2 md:hidden">
-		Web Settings
-	</DropdownHeader>
+	<DropdownHeader class="py-2 md:hidden">Web Settings</DropdownHeader>
 	<DropdownItem class="!dropdown-item-override md:hidden">
-		<Toggle checked={lyrics.autoScrollEnabled} id="autoscroll" spanClass="!toggle-span-override" class="!toggle-override" onchange={toggleAutoScroll} disabled={lyricsUnsynced === 'full'}>Auto-scroll lyrics</Toggle>
+		<Toggle
+			checked={lyrics.autoScrollEnabled}
+			id="autoscroll"
+			spanClass="!toggle-span-override"
+			class="!toggle-override"
+			onchange={toggleAutoScroll}
+			disabled={lyricsUnsynced === 'full'}>Auto-scroll lyrics</Toggle
+		>
 	</DropdownItem>
 	<DropdownDivider class="!dropdown-divider-override md:hidden" />
 	<div class="flex flex-row items-center px-4 py-2 md:hidden max-w-42 mx-auto">
@@ -1038,15 +1233,13 @@
 	{guild.name ?? 'Loading...'}
 </Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#shuffle">
-{#if player.shuffle}
+	{#if player.shuffle}
 		Shuffle enabled
 	{:else}
-	Shuffle
-{/if}
+		Shuffle
+	{/if}
 </Tooltip>
-<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">
-	Rewind to start
-</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">Rewind to start</Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#pauseplay">
 	{#if !player.paused && !hasTimeout}
 		Pause
@@ -1079,9 +1272,7 @@
 		Auto-scroll lyrics
 	{/if}
 </Tooltip>
-<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#settings">
-	Settings
-</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#settings">Settings</Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#skip">
 	{#if hasVoteSkipped}
 		Voted to skip
