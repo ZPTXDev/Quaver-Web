@@ -52,7 +52,7 @@
 	import { SvelteToast } from '@zerodevx/svelte-toast';
 
 	let { data }: { data: PageData } = $props();
-	const colorThief = new ColorThief();
+	const colorThief = new (ColorThief as any)();
 	let positionUpdateInterval: any;
 	let date = new SvelteDate();
 	let guild: WebGuild = $state({} as WebGuild);
@@ -136,8 +136,8 @@
 				: false,
 	);
 	let uniqueRequesterTracks = $derived(
-		(player.queue ?? []).filter((value, index, self) =>
-			self.findIndex(v => v.requesterId === value.requesterId) === index),
+		(player.queue ?? []).filter((value: any, index: number, self: any[]) =>
+			self.findIndex((v: any) => v.requesterId === value.requesterId) === index),
 	);
 
 	function toggleAutoScroll() {
@@ -452,6 +452,67 @@
 
 	async function loadData() {
 		loading = true;
+		
+		// Clear previous server's state
+		clearInterval(positionUpdateInterval);
+		
+		// Remove old socket listeners to prevent duplicates
+		states.socket.off('intervalTrackUpdate');
+		states.socket.off('queueUpdate');
+		states.socket.off('filterUpdate');
+		states.socket.off('loopUpdate');
+		states.socket.off('shuffleUpdate');
+		states.socket.off('pauseUpdate');
+		states.socket.off('volumeUpdate');
+		states.socket.off('channelUpdate');
+		states.socket.off('textChannelUpdate');
+		states.socket.off('timeoutUpdate');
+		states.socket.off('pauseTimeoutUpdate');
+		states.socket.off('playerDisconnect');
+		states.socket.off('stayFeatureUpdate');
+		states.socket.off('autoLyricsFeatureUpdate');
+		states.socket.off('smartQueueFeatureUpdate');
+		
+		// Reset player state
+		player = {
+			connected: false,
+			playing: {
+				nothingPlaying: true,
+			},
+			paused: true,
+			loop: 0,
+			volume: 100,
+			shuffle: false,
+		};
+		
+		// Reset position state
+		position = {
+			current: 0,
+			lastKnown: 0,
+			dragging: false,
+		};
+		
+		// Reset lyrics state
+		lyrics = {
+			noHits: false,
+			loading: false,
+			text: [],
+			artist: '',
+			album: '',
+			title: '',
+			duration: 0,
+			lastScrolledElementId: '',
+			color: {
+				bg: '',
+				text: '',
+			},
+			autoScrollEnabled: true,
+		};
+		
+		// Reset search filters
+		queueSearchValue = '';
+		queueSearchFilterIds = [];
+		
 		try {
 			({ user } = await fetchUser(states.socket, data.token as string));
 			states.manualLoading = false;
@@ -504,7 +565,7 @@
 			});
 			states.socket.on('queueUpdate', q => {
 				player.queue = q;
-				queueSearchFilterIds = queueSearchFilterIds.filter(id => uniqueRequesterTracks.some(track => track.requesterId === id));
+				queueSearchFilterIds = queueSearchFilterIds.filter(id => uniqueRequesterTracks.some((track: any) => track.requesterId === id));
 			});
 			states.socket.on('filterUpdate', filters => {
 				player.filters = filters;
@@ -922,7 +983,7 @@
 		Filter by requester
 	</DropdownHeader>
 	<DropdownGroup class="!dropdown-group-override">
-		{#each uniqueRequesterTracks.toSorted((a, b) => a.requesterTag.localeCompare(b.requesterTag)) as track}
+		{#each uniqueRequesterTracks.toSorted((a: any, b: any) => a.requesterTag.localeCompare(b.requesterTag)) as track}
 			<DropdownItem class="!dropdown-item-override flex flex-row items-center gap-2">
 				<Checkbox checked={queueSearchFilterIds.includes(track.requesterId)} value={track.requesterId} class="!h-full !w-full !checkbox-override focus:ring-0" onchange={queueSearchFilterUpdated} />
 				{#if track.requesterAvatar}

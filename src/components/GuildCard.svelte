@@ -14,7 +14,7 @@ function getGuildURL(guild?: WebGuild): string {
 	if (guild.botInGuild) return `/guild/${guild.id}`;
 	return `${DISCORD_BASE_URL}&guild_id=${guild.id}`;
 }
-function lazy(image, src) {
+function lazy(image: HTMLImageElement, src: string) {
 	const loaded = () => {
 		imgsLoaded += 1;
 	}
