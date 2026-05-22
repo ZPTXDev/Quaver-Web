@@ -15,10 +15,6 @@ const config = {
 			'$components': './src/components',
 			'$images': './src/images'
 		}
-	},
-
-	compilerOptions: {
-		accessors: true
 	}
 };
 
