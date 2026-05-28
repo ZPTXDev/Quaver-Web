@@ -7,12 +7,18 @@
 		errorToast,
 		fetchGuilds,
 		fetchUser,
-		friendlyTimeString, getGuildIconURL, getInitials,
-		hasManageServerPermissions as hasManageServerPermissionsUtil, infoToast,
+		friendlyTimeString,
+		getGuildIconURL,
+		getInitials,
+		hasManageServerPermissions as hasManageServerPermissionsUtil,
+		infoToast,
 		join,
-		lazy, preload,
-		request, scrollChildIntoView,
-		signout, successToast,
+		lazy,
+		preload,
+		request,
+		scrollChildIntoView,
+		signout,
+		successToast,
 		type WebGuild,
 		type WebUser
 	} from '$lib/util';
@@ -21,7 +27,17 @@
 	import { env } from '$env/dynamic/public';
 	import { GuildSelector, Navbar, TrackCard } from '$components';
 	import { Pause, Play, Snooze } from '$components/icons';
-	import { Avatar, Checkbox, Dropdown, DropdownDivider, DropdownGroup, DropdownHeader, DropdownItem, Toggle, Tooltip } from 'flowbite-svelte';
+	import {
+		Avatar,
+		Checkbox,
+		Dropdown,
+		DropdownDivider,
+		DropdownGroup,
+		DropdownHeader,
+		DropdownItem,
+		Toggle,
+		Tooltip
+	} from 'flowbite-svelte';
 	import {
 		AdjustmentsVerticalOutline,
 		AngleRightOutline,
@@ -36,7 +52,8 @@
 		ShuffleOutline,
 		VolumeDownOutline,
 		VolumeMuteOutline,
-		VolumeUpOutline, SearchOutline
+		VolumeUpOutline,
+		SearchOutline
 	} from 'flowbite-svelte-icons';
 	import { msToTime, msToTimeString } from '@zptxdev/zptx-lib';
 	import RangeSlider from 'svelte-range-slider-pips';
@@ -52,7 +69,8 @@
 	let positionUpdateInterval: any;
 	let date = new SvelteDate();
 	let guild: WebGuild = $state({} as WebGuild);
-	let guilds: WebGuild[] = $state([]), user: WebUser = $state(initialWebUserState);
+	let guilds: WebGuild[] = $state([]),
+		user: WebUser = $state(initialWebUserState);
 	let addTrackLoading = $state(false);
 	let addTrackValue = $state('');
 	let queueSearchValue = $state('');
@@ -60,24 +78,24 @@
 	let player: any = $state({
 		connected: false,
 		playing: {
-			nothingPlaying: true,
+			nothingPlaying: true
 		},
 		paused: true,
 		loop: 0,
 		volume: 100,
-		shuffle: false,
+		shuffle: false
 	});
 	let settings: any = $state({});
 	let position = $state({
 		current: 0,
 		lastKnown: 0,
-		dragging: false,
+		dragging: false
 	});
 	let currentVolume = $state(-1);
 	let lyrics = $state({
 		noHits: false,
 		loading: false,
-		text: [] as { text: string, time: number }[],
+		text: [] as { text: string; time: number }[],
 		artist: '',
 		album: '',
 		title: '',
@@ -85,9 +103,9 @@
 		lastScrolledElementId: '',
 		color: {
 			bg: '',
-			text: '',
+			text: ''
 		},
-		autoScrollEnabled: true,
+		autoScrollEnabled: true
 	});
 	let loading = $state(true);
 	let gsOpen = $state(false);
@@ -101,39 +119,46 @@
 	let hasManageServerPermissions = $derived(hasManageServerPermissionsUtil(guild?.permissions));
 	let isAd = $derived(player.playing.track?.isAd === true);
 	let hasTrackPermissions = $derived(
-		!isAd && (player.playing.track?.requesterId === user.id
-		|| hasManageServerPermissions),
+		!isAd && (player.playing.track?.requesterId === user.id || hasManageServerPermissions)
 	);
-	let hasVoteSkipped = $derived(!inactive && player.playing.skip?.users?.includes(user.id))
+	let hasVoteSkipped = $derived(!inactive && player.playing.skip?.users?.includes(user.id));
 	let volume = $derived(player.volume);
-	let queue: any[] = $derived(player.queue?.filter((track: any) => (
-		!queueSearchValue
-		|| track.info.title.toLowerCase().includes(queueSearchValue.toLowerCase()
-		|| track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase())))
-			&& (queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))
-	) ?? []);
+	let queue: any[] = $derived(
+		player.queue?.filter(
+			(track: any) =>
+				(!queueSearchValue ||
+					track.info.title
+						.toLowerCase()
+						.includes(
+							queueSearchValue.toLowerCase() ||
+								track.info.author.toLowerCase().includes(queueSearchValue.toLowerCase())
+						)) &&
+				(queueSearchFilterIds.length === 0 || queueSearchFilterIds.includes(track.requesterId))
+		) ?? []
+	);
 	let lyricsMetaMatchesTrack = $derived(
-		player.playing.track?.info.title === lyrics.title
-		&& player.playing.track?.info.author === lyrics.artist
-		&& player.playing.track?.pluginInfo?.albumName === lyrics.album
-		&& Math.round(player.playing.track?.info.length / 1000) === lyrics.duration,
+		player.playing.track?.info.title === lyrics.title &&
+			player.playing.track?.info.author === lyrics.artist &&
+			player.playing.track?.pluginInfo?.albumName === lyrics.album &&
+			Math.round(player.playing.track?.info.length / 1000) === lyrics.duration
 	);
-	let lyricsExistsForTrack = $derived(
-		lyrics.text.length > 0
-		&& lyricsMetaMatchesTrack,
-	);
+	let lyricsExistsForTrack = $derived(lyrics.text.length > 0 && lyricsMetaMatchesTrack);
 	let lyricsUnsynced = $derived(
-		!lyricsExistsForTrack
-		|| !lyrics.text.some((line: { text: string, time: number }) => line.time !== 0)
+		!lyricsExistsForTrack ||
+			!lyrics.text.some((line: { text: string; time: number }) => line.time !== 0)
 			? 'full'
-			: lyrics.text.some((line: { text: string, time: number }) => line.time !== 0)
-			&& lyrics.text.filter((line: { text: string, time: number }) => line.time === 0 && line.text !== '').length > 0
+			: lyrics.text.some((line: { text: string; time: number }) => line.time !== 0) &&
+				  lyrics.text.filter(
+						(line: { text: string; time: number }) => line.time === 0 && line.text !== ''
+				  ).length > 0
 				? 'partial'
-				: false,
+				: false
 	);
 	let uniqueRequesterTracks = $derived(
-		(player.queue ?? []).filter((value: any, index: number, self: any[]) =>
-			self.findIndex((v: any) => v.requesterId === value.requesterId) === index),
+		(player.queue ?? []).filter(
+			(value: any, index: number, self: any[]) =>
+				self.findIndex((v: any) => v.requesterId === value.requesterId) === index
+		)
 	);
 
 	function toggleAutoScroll() {
@@ -155,7 +180,7 @@
 	}
 	async function getLyrics() {
 		if (inactiveLessTimeouts || player.playing.track?.info.isStream || isAd) return;
-		if (lyrics.loading || lyricsExistsForTrack || lyricsMetaMatchesTrack && lyrics.noHits) return;
+		if (lyrics.loading || lyricsExistsForTrack || (lyricsMetaMatchesTrack && lyrics.noHits)) return;
 		lyrics.loading = true;
 		lyrics.noHits = false;
 		lyrics.artist = player.playing.track?.info.author;
@@ -180,24 +205,30 @@
 			if (data?.syncedLyrics || data.plainLyrics) {
 				lyrics.lastScrolledElementId = '';
 				if (data.syncedLyrics) {
-					lyrics.text = data.syncedLyrics.trimEnd().split('\n').map((line: string) => {
-						const match = line.trimEnd().match(/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?]\s*(.*)$/);
-						if (match) {
-							const minutes = parseInt(match[1], 10);
-							const seconds = parseInt(match[2], 10);
-							const milliseconds = match[3] ? parseInt(match[3], 10) : 0;
-							return {
-								text: match[4],
-								time: (minutes * 60 + seconds) * 1000 + milliseconds,
-							};
-						}
-						return { text: line, time: 0 };
-					});
+					lyrics.text = data.syncedLyrics
+						.trimEnd()
+						.split('\n')
+						.map((line: string) => {
+							const match = line.trimEnd().match(/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?]\s*(.*)$/);
+							if (match) {
+								const minutes = parseInt(match[1], 10);
+								const seconds = parseInt(match[2], 10);
+								const milliseconds = match[3] ? parseInt(match[3], 10) : 0;
+								return {
+									text: match[4],
+									time: (minutes * 60 + seconds) * 1000 + milliseconds
+								};
+							}
+							return { text: line, time: 0 };
+						});
 				} else {
-					lyrics.text = data.plainLyrics.trimEnd().split('\n').map((line: string) => ({
-						text: line.trimEnd(),
-						time: 0,
-					}));
+					lyrics.text = data.plainLyrics
+						.trimEnd()
+						.split('\n')
+						.map((line: string) => ({
+							text: line.trimEnd(),
+							time: 0
+						}));
 				}
 			} else {
 				lyrics.noHits = true;
@@ -209,10 +240,11 @@
 			lyrics.loading = false;
 		}
 	}
-	function lyricLineColor(line: { text: string, time: number }): string {
+	function lyricLineColor(line: { text: string; time: number }): string {
 		if (!lyrics.text || lyrics.text.length === 0) return 'text-500';
-		const nextLine: { text: string; time: number } | undefined =
-			lyrics.text.find((l: { text: string; time: number }) => l.time > line.time);
+		const nextLine: { text: string; time: number } | undefined = lyrics.text.find(
+			(l: { text: string; time: number }) => l.time > line.time
+		);
 		if (nextLine) {
 			if (position.current >= line.time && position.current < nextLine.time) return 'opacity-100';
 			if (position.current >= line.time) return 'opacity-40';
@@ -241,93 +273,135 @@
 		lyrics.color.text = `color: ${blackContrast - 106 > whiteContrast - -108 ? 'black' : 'white'}`;
 	}
 	function addTrack(event: SubmitEvent) {
-		if (!(event.target instanceof HTMLFormElement) || !(event.target[0] instanceof HTMLInputElement)) return;
+		if (
+			!(event.target instanceof HTMLFormElement) ||
+			!(event.target[0] instanceof HTMLInputElement)
+		)
+			return;
 		const value = event.target[0].value;
 		if (addTrackLoading || !value) return;
 		addTrackLoading = true;
-		states.socket.emit('update', [guild.id, { type: 'add', value }], (response: { status: string }) => {
-			if (response.status === 'success') {
-				addTrackValue = '';
-				successToast('Track added to the queue successfully.');
-			}
-			else {
-				switch (response.status) {
-					case 'error-no-results':
-						errorToast('No results found for the provided query.');
-						break;
-					default:
-						errorToast('An error occurred while adding the track.');
-						break;
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'add', value }],
+			(response: { status: string }) => {
+				if (response.status === 'success') {
+					addTrackValue = '';
+					successToast('Track added to the queue successfully.');
+				} else {
+					switch (response.status) {
+						case 'error-no-results':
+							errorToast('No results found for the provided query.');
+							break;
+						default:
+							errorToast('An error occurred while adding the track.');
+							break;
+					}
 				}
+				addTrackLoading = false;
 			}
-			addTrackLoading = false;
-		});
+		);
 	}
 	function pausePlayPlayer() {
 		if (inactive || isAd) return;
 		player.paused = !player.paused;
-		states.socket.emit('update', [guild.id, { type: 'paused', value: player.paused }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				player.paused = !player.paused; // revert the pause state
-				if (response.status === 'error-ad-playing') {
-					errorToast(`Cannot ${player.paused ? 'resume' : 'pause'} the player while an ad is playing.`);
-				} else {
-					errorToast(`Failed to ${player.paused ? 'pause' : 'resume'} the player.`);
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'paused', value: player.paused }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					player.paused = !player.paused; // revert the pause state
+					if (response.status === 'error-ad-playing') {
+						errorToast(
+							`Cannot ${player.paused ? 'resume' : 'pause'} the player while an ad is playing.`
+						);
+					} else {
+						errorToast(`Failed to ${player.paused ? 'pause' : 'resume'} the player.`);
+					}
+					return;
 				}
-				return;
 			}
-		});
+		);
 	}
 	function shuffle() {
 		if (inactive) return;
 		player.shuffle = !player.shuffle;
-		states.socket.emit('update', [guild.id, { type: 'shuffle', value: player.shuffle }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				player.shuffle = !player.shuffle; // revert the shuffle state
-				errorToast('Failed to shuffle the queue.');
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'shuffle', value: player.shuffle }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					player.shuffle = !player.shuffle; // revert the shuffle state
+					errorToast('Failed to shuffle the queue.');
+				}
 			}
-		});
+		);
 	}
 	function seekTo(ms: number) {
-		if (!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		if (
+			!hasTrackPermissions ||
+			inactive ||
+			isAd ||
+			player.playing.duration === 0 ||
+			player.playing.nothingPlaying ||
+			player.playing.track?.info.isStream ||
+			player.pauseTimeout
+		)
+			return;
 		position.dragging = true;
 		position.current = ms;
 		if (player.connected && !player.playing?.nothingPlaying) {
-			states.socket.emit('update', [guild.id, { type: 'seek', value: ms }], (response: { status: string }) => {
-				if (response.status !== 'success') {
-					position.current = position.lastKnown;
-					position.dragging = false;
-					if (response.status === 'error-ad-playing') {
-						errorToast('Cannot seek while an ad is playing.');
-					} else {
-						errorToast('Failed to rewind the track.');
+			states.socket.emit(
+				'update',
+				[guild.id, { type: 'seek', value: ms }],
+				(response: { status: string }) => {
+					if (response.status !== 'success') {
+						position.current = position.lastKnown;
+						position.dragging = false;
+						if (response.status === 'error-ad-playing') {
+							errorToast('Cannot seek while an ad is playing.');
+						} else {
+							errorToast('Failed to rewind the track.');
+						}
+						return;
 					}
-					return;
+					position.lastKnown = position.current;
+					position.dragging = false;
 				}
-				position.lastKnown = position.current;
-				position.dragging = false;
-			});
+			);
 		}
 	}
 	function rewind() {
-		if (!hasTrackPermissions || isAd || player.playing.duration === 0 || player.playing.nothingPlaying || player.playing.track?.info.isStream || player.pauseTimeout) return;
+		if (
+			!hasTrackPermissions ||
+			isAd ||
+			player.playing.duration === 0 ||
+			player.playing.nothingPlaying ||
+			player.playing.track?.info.isStream ||
+			player.pauseTimeout
+		)
+			return;
 		position.dragging = true;
 		position.current = 0;
 		if (player.connected && !player.playing?.nothingPlaying) {
-			states.socket.emit('update', [guild.id, { type: 'seek', value: 0 }], (response: { status: string }) => {
-				if (response.status !== 'success') {
-					position.current = position.lastKnown;
-					position.dragging = false;
-					if (response.status === 'error-ad-playing') {
-						errorToast('Cannot seek while an ad is playing.');
-					} else {
-						errorToast('Failed to rewind the track.');
+			states.socket.emit(
+				'update',
+				[guild.id, { type: 'seek', value: 0 }],
+				(response: { status: string }) => {
+					if (response.status !== 'success') {
+						position.current = position.lastKnown;
+						position.dragging = false;
+						if (response.status === 'error-ad-playing') {
+							errorToast('Cannot seek while an ad is playing.');
+						} else {
+							errorToast('Failed to rewind the track.');
+						}
+						return;
 					}
-					return;
+					position.lastKnown = position.current;
+					position.dragging = false;
 				}
-				position.lastKnown = position.current;
-				position.dragging = false;
-			});
+			);
 		}
 	}
 	function skip() {
@@ -345,50 +419,72 @@
 	function loop() {
 		if (inactive) return;
 		player.loop = (player.loop + 1) % 3;
-		states.socket.emit('update', [guild.id, { type: 'loop', value: player.loop }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				player.loop = (player.loop - 1 + 3) % 3; // revert the loop state
-				errorToast(`Failed to ${player.loop === 0 ? 'disable looping' : player.loop === 2 ? 'enable single track loop' : 'enable queue loop'}.`);
-				return;
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'loop', value: player.loop }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					player.loop = (player.loop - 1 + 3) % 3; // revert the loop state
+					errorToast(
+						`Failed to ${player.loop === 0 ? 'disable looping' : player.loop === 2 ? 'enable single track loop' : 'enable queue loop'}.`
+					);
+					return;
+				}
 			}
-		});
+		);
 	}
 	function mute() {
 		if (!inVoiceChannel) return;
-		currentVolume = player.volume === 0 ? 100 : 0
-		states.socket.emit('update', [guild.id, { type: 'volume', value: currentVolume }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				errorToast(`Failed to ${currentVolume === 0 ? 'mute' : 'unmute'} the player.`);
+		currentVolume = player.volume === 0 ? 100 : 0;
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'volume', value: currentVolume }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					errorToast(`Failed to ${currentVolume === 0 ? 'mute' : 'unmute'} the player.`);
+					currentVolume = -1;
+					return;
+				}
+				player.volume = currentVolume;
 				currentVolume = -1;
-				return;
 			}
-			player.volume = currentVolume;
-			currentVolume = -1;
-		});
+		);
 	}
 	function bassboostToggle() {
 		if (inactive) return;
 		player.filters.bassboost = !player.filters.bassboost;
-		states.socket.emit('update', [guild.id, { type: 'bassboost', value: player.filters.bassboost }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				errorToast(`Failed to ${player.filters.bassboost ? 'enable' : 'disable'} Bass Boost.`);
-				player.filters.bassboost = !player.filters.bassboost; // revert the bassboost state
-				return;
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'bassboost', value: player.filters.bassboost }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					errorToast(`Failed to ${player.filters.bassboost ? 'enable' : 'disable'} Bass Boost.`);
+					player.filters.bassboost = !player.filters.bassboost; // revert the bassboost state
+					return;
+				}
+				infoToast(
+					`<div class="flex flex-col gap-1"><span>Bass Boost <strong>${player.filters.bassboost ? 'enabled' : 'disabled'}</strong>.</span><span class="text-xs">Filters may take a few seconds to apply.</span></div>`
+				);
 			}
-			infoToast(`<div class="flex flex-col gap-1"><span>Bass Boost <strong>${player.filters.bassboost ? 'enabled' : 'disabled'}</strong>.</span><span class="text-xs">Filters may take a few seconds to apply.</span></div>`);
-		});
+		);
 	}
 	function nightcoreToggle() {
 		if (inactive) return;
 		player.filters.nightcore = !player.filters.nightcore;
-		states.socket.emit('update', [guild.id, { type: 'nightcore', value: player.filters.nightcore }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				errorToast(`Failed to ${player.filters.nightcore ? 'enable' : 'disable'} Nightcore.`);
-				player.filters.nightcore = !player.filters.nightcore; // revert the nightcore state
-				return;
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'nightcore', value: player.filters.nightcore }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					errorToast(`Failed to ${player.filters.nightcore ? 'enable' : 'disable'} Nightcore.`);
+					player.filters.nightcore = !player.filters.nightcore; // revert the nightcore state
+					return;
+				}
+				infoToast(
+					`<div class="flex flex-col gap-1"><span>Nightcore <strong>${player.filters.nightcore ? 'enabled' : 'disabled'}</strong>.</span><span class="text-xs">Filters may take a few seconds to apply.</span></div>`
+				);
 			}
-			infoToast(`<div class="flex flex-col gap-1"><span>Nightcore <strong>${player.filters.nightcore ? 'enabled' : 'disabled'}</strong>.</span><span class="text-xs">Filters may take a few seconds to apply.</span></div>`);
-		});
+		);
 	}
 	function settingsToggle(event: Event) {
 		if (!event.target || !(event.target instanceof HTMLInputElement)) return;
@@ -399,14 +495,18 @@
 			errorToast(`You need <strong>Quaver Premium</strong> to enable ${featureMap[id].name}.`);
 			return;
 		}
-		states.socket.emit('update', [guild.id, { type: `${featureMap[id].id}Feature`, value: enabled }], (response: { status: string }) => {
-			if (response.status !== 'success' && event.target instanceof HTMLInputElement) {
-				event.target.checked = settings[id].enabled;
-				errorToast(`Failed to ${enabled ? 'enable' : 'disable'} ${featureMap[id].name}.`);
-				return;
+		states.socket.emit(
+			'update',
+			[guild.id, { type: `${featureMap[id].id}Feature`, value: enabled }],
+			(response: { status: string }) => {
+				if (response.status !== 'success' && event.target instanceof HTMLInputElement) {
+					event.target.checked = settings[id].enabled;
+					errorToast(`Failed to ${enabled ? 'enable' : 'disable'} ${featureMap[id].name}.`);
+					return;
+				}
+				settings[id].enabled = enabled;
 			}
-			settings[id].enabled = enabled;
-		});
+		);
 	}
 	function positionFormatter(value: number): string {
 		return msToTimeString(msToTime(value), true);
@@ -431,15 +531,19 @@
 		position.dragging = true;
 		position.current = parseInt(event.detail.value);
 		if (player.connected && !player.playing?.nothingPlaying) {
-			states.socket.emit('update', [guild.id, { type: 'seek', value: parseInt(event.detail.value) }], (response: { status: string }) => {
-				if (response.status !== 'success') {
-					position.current = position.lastKnown;
+			states.socket.emit(
+				'update',
+				[guild.id, { type: 'seek', value: parseInt(event.detail.value) }],
+				(response: { status: string }) => {
+					if (response.status !== 'success') {
+						position.current = position.lastKnown;
+						position.dragging = false;
+						return;
+					}
+					position.lastKnown = position.current;
 					position.dragging = false;
-					return;
 				}
-				position.lastKnown = position.current;
-				position.dragging = false;
-			});
+			);
 		}
 	}
 	function volumeFormatter(value: number): string {
@@ -453,23 +557,27 @@
 	}
 	function volumeDragStopped(event: any) {
 		currentVolume = parseInt(event.detail.value);
-		states.socket.emit('update', [guild.id, { type: 'volume', value: parseInt(event.detail.value) }], (response: { status: string }) => {
-			if (response.status !== 'success') {
-				player.volume = parseInt(event.detail.startValue);
+		states.socket.emit(
+			'update',
+			[guild.id, { type: 'volume', value: parseInt(event.detail.value) }],
+			(response: { status: string }) => {
+				if (response.status !== 'success') {
+					player.volume = parseInt(event.detail.startValue);
+					currentVolume = -1;
+					return;
+				}
+				player.volume = parseInt(event.detail.value);
 				currentVolume = -1;
-				return;
 			}
-			player.volume = parseInt(event.detail.value);
-			currentVolume = -1;
-		});
+		);
 	}
 
 	async function loadData() {
 		loading = true;
-		
+
 		// Clear previous server's state
 		clearInterval(positionUpdateInterval);
-		
+
 		// Remove old socket listeners to prevent duplicates
 		states.socket.off('intervalTrackUpdate');
 		states.socket.off('queueUpdate');
@@ -486,26 +594,26 @@
 		states.socket.off('stayFeatureUpdate');
 		states.socket.off('autoLyricsFeatureUpdate');
 		states.socket.off('smartQueueFeatureUpdate');
-		
+
 		// Reset player state
 		player = {
 			connected: false,
 			playing: {
-				nothingPlaying: true,
+				nothingPlaying: true
 			},
 			paused: true,
 			loop: 0,
 			volume: 100,
-			shuffle: false,
+			shuffle: false
 		};
-		
+
 		// Reset position state
 		position = {
 			current: 0,
 			lastKnown: 0,
-			dragging: false,
+			dragging: false
 		};
-		
+
 		// Reset lyrics state
 		lyrics = {
 			noHits: false,
@@ -518,15 +626,15 @@
 			lastScrolledElementId: '',
 			color: {
 				bg: '',
-				text: '',
+				text: ''
 			},
-			autoScrollEnabled: true,
+			autoScrollEnabled: true
 		};
-		
+
 		// Reset search filters
 		queueSearchValue = '';
 		queueSearchFilterIds = [];
-		
+
 		try {
 			({ user } = await fetchUser(states.socket, data.token as string));
 			states.manualLoading = false;
@@ -549,12 +657,10 @@
 			const s = await request(states.socket, guild.id, 'settings');
 			if (s.response) settings = s.response;
 			loading = false;
-		}
-		catch (error) {
+		} catch (error) {
 			await signout();
 			return goto('/');
-		}
-		finally {
+		} finally {
 			if (!player.playing?.nothingPlaying) {
 				position.current = getPosition(player.playing);
 				position.lastKnown = position.current;
@@ -564,10 +670,14 @@
 				}
 				await getLyrics();
 			}
-			states.socket.on('intervalTrackUpdate', playing => {
+			states.socket.on('intervalTrackUpdate', (playing) => {
 				player.playing = playing;
 				player.connected = true;
-				if (!position.dragging && !player.paused && (position.lastKnown !== getPosition(playing) || position.lastKnown > position.current)) {
+				if (
+					!position.dragging &&
+					!player.paused &&
+					(position.lastKnown !== getPosition(playing) || position.lastKnown > position.current)
+				) {
 					position.current = getPosition(playing);
 					position.lastKnown = position.current;
 					clearInterval(positionUpdateInterval);
@@ -577,20 +687,22 @@
 				}
 				getLyrics();
 			});
-			states.socket.on('queueUpdate', q => {
+			states.socket.on('queueUpdate', (q) => {
 				player.queue = q;
-				queueSearchFilterIds = queueSearchFilterIds.filter(id => uniqueRequesterTracks.some((track: any) => track.requesterId === id));
+				queueSearchFilterIds = queueSearchFilterIds.filter((id) =>
+					uniqueRequesterTracks.some((track: any) => track.requesterId === id)
+				);
 			});
-			states.socket.on('filterUpdate', filters => {
+			states.socket.on('filterUpdate', (filters) => {
 				player.filters = filters;
 			});
-			states.socket.on('loopUpdate', loop => {
+			states.socket.on('loopUpdate', (loop) => {
 				player.loop = loop;
 			});
-			states.socket.on('shuffleUpdate', shuffle => {
+			states.socket.on('shuffleUpdate', (shuffle) => {
 				player.shuffle = shuffle;
 			});
-			states.socket.on('pauseUpdate', paused => {
+			states.socket.on('pauseUpdate', (paused) => {
 				player.paused = paused;
 				if (paused) {
 					clearInterval(positionUpdateInterval);
@@ -601,19 +713,19 @@
 					positionUpdateInterval = setInterval(positionUpdateIntervalFn, 1000);
 				}
 			});
-			states.socket.on('volumeUpdate', vol => {
+			states.socket.on('volumeUpdate', (vol) => {
 				player.volume = vol;
 			});
-			states.socket.on('channelUpdate', channel => {
+			states.socket.on('channelUpdate', (channel) => {
 				player.channel = channel;
 			});
-			states.socket.on('textChannelUpdate', textChannel => {
+			states.socket.on('textChannelUpdate', (textChannel) => {
 				player.textChannel = textChannel;
 			});
-			states.socket.on('timeoutUpdate', timeout => {
+			states.socket.on('timeoutUpdate', (timeout) => {
 				player.timeout = timeout;
 			});
-			states.socket.on('pauseTimeoutUpdate', pauseTimeout => {
+			states.socket.on('pauseTimeoutUpdate', (pauseTimeout) => {
 				player.pauseTimeout = pauseTimeout;
 			});
 			states.socket.on('playerDisconnect', () => {
@@ -632,13 +744,13 @@
 				position.lastKnown = 0;
 				clearInterval(positionUpdateInterval);
 			});
-			states.socket.on('stayFeatureUpdate', state => {
+			states.socket.on('stayFeatureUpdate', (state) => {
 				settings.stay.enabled = state.enabled;
 			});
-			states.socket.on('autoLyricsFeatureUpdate', state => {
+			states.socket.on('autoLyricsFeatureUpdate', (state) => {
 				settings.autolyrics.enabled = state.enabled;
 			});
-			states.socket.on('smartQueueFeatureUpdate', state => {
+			states.socket.on('smartQueueFeatureUpdate', (state) => {
 				settings.smartqueue.enabled = state.enabled;
 			});
 		}
@@ -652,7 +764,12 @@
 				lyrics.text.forEach((line, index) => {
 					const nextLine = lyrics.text[index + 1];
 					if (index !== 0 && line.time === 0) return;
-					if (nextLine && currentTime >= line.time && currentTime < nextLine.time && lyrics.lastScrolledElementId !== `lyricline-${index}`) {
+					if (
+						nextLine &&
+						currentTime >= line.time &&
+						currentTime < nextLine.time &&
+						lyrics.lastScrolledElementId !== `lyricline-${index}`
+					) {
 						const lyricsContainer = document.querySelector<HTMLElement>(
 							'#lyrics .simplebar-content-wrapper'
 						);
@@ -675,13 +792,32 @@
 		if (page.data.guildId !== guild?.id && !loading) {
 			loadData();
 		}
-	})
+	});
 
 	onMount(async () => {
 		if (!states.socket.connected) {
 			return goto(`/?guild_id=${data.guildId}`);
 		}
 		await loadData();
+		states.connected = true; // Mark as connected after initial load
+		let hasLoadedOnce = true; // Track that initial load is complete
+
+		// Listen for socket disconnect and reconnect events
+		states.socket.on('disconnect', () => {
+			states.connected = false;
+			errorToast('Connection lost, attempting to reconnect...');
+		});
+		states.socket.on('connect', async () => {
+			// Only reload data if this is a reconnection (not initial connection)
+			if (hasLoadedOnce && !states.connected) {
+				states.connected = true;
+				successToast("You're back online!");
+				// Refresh guild data on reconnection
+				await loadData();
+			} else {
+				states.connected = true;
+			}
+		});
 		document.addEventListener('keydown', (event: KeyboardEvent) => {
 			if (event.ctrlKey && event.key === 'q' && !addTrackLoading) {
 				if (gsOpen) return;
@@ -708,17 +844,22 @@
 </script>
 
 <svelte:head>
-	<title>{guild.name ?? "Loading..."} | Quaver</title>
+	<title>{guild.name ?? 'Loading...'} | Quaver</title>
 </svelte:head>
 
 {#snippet trackSearch(mobile = false)}
 	<div
-		class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile ? 'md:hidden' : 'max-md:hidden'}"
+		class="relative w-full flex flex-row items-center gap-2 md:w-72 lg:w-96 {mobile
+			? 'md:hidden'
+			: 'max-md:hidden'}"
 	>
 		<button
-			onclick={() => gsOpen = true}
+			onclick={() => (gsOpen = true)}
 			id="guildicon"
-			class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon || loading ? 'background-200' : 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300 cursor-pointer"
+			class="h-[46px] md:h-[38px] aspect-square shrink-0 rounded-full overflow-hidden {guild.icon ||
+			loading
+				? 'background-200'
+				: 'background-700'} transition-colors border border-background-300 dark:border-background-dark-300 cursor-pointer"
 		>
 			{#if !loading && guild.icon}
 				{#key guild.icon}
@@ -736,7 +877,10 @@
 		<form
 			class="relative w-full group"
 			action="#"
-			onsubmit={(e: SubmitEvent) => {e.preventDefault(); addTrack(e)}}
+			onsubmit={(e: SubmitEvent) => {
+				e.preventDefault();
+				addTrack(e);
+			}}
 		>
 			<div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
 				<MusicOutline class="z-10 text-500 w-4.5 h-4.5" />
@@ -761,7 +905,7 @@
 				<button type="reset">
 					<CloseOutline
 						class="text-500 w-4.5 h-full cursor-pointer{addTrackValue ? '' : ' hidden'}"
-						onclick={() => addTrackValue = ''}
+						onclick={() => (addTrackValue = '')}
 					/>
 				</button>
 				<div class="h-4/7 w-0.5 background-300"></div>
@@ -772,18 +916,25 @@
 		</form>
 	</div>
 {/snippet}
-{#snippet lyricLine(line: { text: string, time: number }, index: number)}
+{#snippet lyricLine(line: { text: string; time: number }, index: number)}
 	<button
-		onclick={() => lyricsUnsynced === 'full' ? undefined : seekTo(line.time)}
+		onclick={() => (lyricsUnsynced === 'full' ? undefined : seekTo(line.time))}
 		id="lyricline-{index}"
-		class="transition-opacity {lyricLineColor(line)} text-start{lyricsUnsynced === 'full' || !hasTrackPermissions || inactive || player.playing.duration === 0 || player.playing.track?.info.isStream ? '' : ' hover:cursor-pointer hover:opacity-100'}"
-		>{line.text}</button
+		class="transition-opacity {lyricLineColor(line)} text-start{lyricsUnsynced === 'full' ||
+		!hasTrackPermissions ||
+		inactive ||
+		player.playing.duration === 0 ||
+		player.playing.track?.info.isStream
+			? ''
+			: ' hover:cursor-pointer hover:opacity-100'}">{line.text}</button
 	>
 {/snippet}
 {#snippet volumeSlider(mobile = false)}
 	<button
 		id="mute"
-		class="transition {!inVoiceChannel ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 -mr-0.5"
+		class="transition {!inVoiceChannel
+			? 'button-disabled-class'
+			: 'button-hover-class'} w-5 h-5 -mr-0.5"
 		onclick={mute}
 		disabled={!inVoiceChannel}
 	>
@@ -837,7 +988,7 @@
 					{/if}
 					<CloseOutline
 						class="text-500 w-4.5 h-full cursor-pointer{queueSearchValue ? '' : ' hidden'}"
-						onclick={() => queueSearchValue = ''}
+						onclick={() => (queueSearchValue = '')}
 					/>
 					<div class="h-4/7 w-0.5 background-300"></div>
 					<FilterOutline id="filter" class="text-500 w-4.5 h-full cursor-pointer outline-0" />
@@ -869,21 +1020,24 @@
 			{/if}
 			{#if player.playing?.nothingPlaying || queue.length === 0}
 				<div
-					class="flex flex-col items-center justify-center text-center h-full{player.playing?.nothingPlaying ? ' mt-4' : ''}"
+					class="flex flex-col items-center justify-center text-center h-full{player.playing
+						?.nothingPlaying
+						? ' mt-4'
+						: ''}"
 				>
 					<span class="text-900 font-semibold text-2xl">
 						{player.playing?.nothingPlaying
 							? "Nothing's playing right now"
 							: queueSearchValue || queueSearchFilterIds.length > 0
-								? "No results from your search"
-								: "No more tracks in the queue"}
+								? 'No results from your search'
+								: 'No more tracks in the queue'}
 					</span>
 					<span class="text-700 text-sm">
 						{player.playing?.nothingPlaying
-							? "Add some tracks to the queue to get started!"
+							? 'Add some tracks to the queue to get started!'
 							: queueSearchValue || queueSearchFilterIds.length > 0
-								? "Try refining your search criteria."
-								: "Add more tracks to keep it going!"}
+								? 'Try refining your search criteria.'
+								: 'Add more tracks to keep it going!'}
 					</span>
 				</div>
 			{/if}
@@ -894,12 +1048,34 @@
 	<div
 		data-simplebar
 		id="lyrics"
-		style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ""}
-		class="relative transition-colors duration-1000 {!player.connected || hasTimeout || !lyrics.color.bg ? 'background-200 ' : ''}rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading || inactive || isAd || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' full-height' : ''}"
+		style={player.connected && !hasTimeout && lyrics.color.bg ? lyrics.color.bg : ''}
+		class="relative transition-colors duration-1000 {!player.connected ||
+		hasTimeout ||
+		!lyrics.color.bg
+			? 'background-200 '
+			: ''}rounded-xl col-span-1 lg:col-span-2 overflow-y-scroll shadow-lg max-md:aspect-square no-scrollbar{loading ||
+		inactive ||
+		isAd ||
+		lyrics.noHits ||
+		player.playing.track?.info.isStream ||
+		lyrics.loading
+			? ' full-height'
+			: ''}"
 	>
 		<div
-			style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ""}
-			class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected || hasTimeout || !lyrics.color.text ? 'text-900 ' : ''}p-8 justify-center{loading || inactive || isAd || lyrics.noHits || player.playing.track?.info.isStream || lyrics.loading ? ' h-full text-center' : ''}"
+			style={player.connected && !hasTimeout && lyrics.color.text ? lyrics.color.text : ''}
+			class="transition-colors duration-1000 flex flex-col gap-8 text-4xl font-semibold {!player.connected ||
+			hasTimeout ||
+			!lyrics.color.text
+				? 'text-900 '
+				: ''}p-8 justify-center{loading ||
+			inactive ||
+			isAd ||
+			lyrics.noHits ||
+			player.playing.track?.info.isStream ||
+			lyrics.loading
+				? ' h-full text-center'
+				: ''}"
 		>
 			{#if loading}
 				<span class="animate-pulse"> Grabbing the details... </span>
@@ -961,13 +1137,13 @@
 					>{isAd ? 'Please wait...' : player.playing.track?.info.author}</span
 				>
 			</div>
-		{:else if !settings?.stay?.enabled && hasTimeout || !player.connected || loading}
+		{:else if (!settings?.stay?.enabled && hasTimeout) || !player.connected || loading}
 			<div class="flex flex-col justify-center truncate ps-8 pe-4">
 				<span class="text-900 font-semibold inline-flex items-center gap-2 text-lg truncate">
 					{#if loading || Object.keys(settings).length === 0}
 						<div class="h-4 rounded-full background-700 w-32 animate-pulse"></div>
 					{:else}
-						{!settings?.stay?.enabled && hasTimeout ? "Idle" : "Sleeping"}
+						{!settings?.stay?.enabled && hasTimeout ? 'Idle' : 'Sleeping'}
 						<Snooze class="w-4 h-4 fill-text-900 dark:fill-text-dark-900" />
 					{/if}
 				</span>
@@ -975,8 +1151,8 @@
 					{#if loading || Object.keys(settings).length === 0}
 						<div class="h-3 rounded-full background-700 w-64 animate-pulse mt-2.5"></div>
 					{:else if !settings?.stay?.enabled && hasTimeout}
-						Quaver is leaving {leavingInMs > 1000 ? "in" : ""}
-						<span class="font-semibold">{leavingInMs > 1000 ? leavingIn : "now"}</span>
+						Quaver is leaving {leavingInMs > 1000 ? 'in' : ''}
+						<span class="font-semibold">{leavingInMs > 1000 ? leavingIn : 'now'}</span>
 					{:else if !player.connected}
 						Play a song to get the party started!
 					{/if}
@@ -996,7 +1172,9 @@
 		<div class="flex flex-row items-center gap-3 mt-2 text-800">
 			<button
 				id="shuffle"
-				class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.shuffle ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative"
+				class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.shuffle
+					? ' text-accent-600 dark:text-accent-dark-600'
+					: ''} relative"
 				onclick={shuffle}
 				disabled={inactive}
 			>
@@ -1009,15 +1187,27 @@
 			</button>
 			<button
 				id="rewind"
-				class="transition {!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream ? 'button-disabled-class' : 'button-hover-class'}"
+				class="transition {!hasTrackPermissions ||
+				inactive ||
+				isAd ||
+				player.playing.duration === 0 ||
+				player.playing.track?.info.isStream
+					? 'button-disabled-class'
+					: 'button-hover-class'}"
 				onclick={rewind}
-				disabled={!hasTrackPermissions || inactive || isAd || player.playing.duration === 0 || player.playing.track?.info.isStream}
+				disabled={!hasTrackPermissions ||
+					inactive ||
+					isAd ||
+					player.playing.duration === 0 ||
+					player.playing.track?.info.isStream}
 			>
 				<BackwardStepSolid class="w-7 h-10" />
 			</button>
 			<button
 				id="pauseplay"
-				class="w-10 h-10 transition {inactive || isAd ? 'button-disabled-class' : 'button-hover-class'}"
+				class="w-10 h-10 transition {inactive || isAd
+					? 'button-disabled-class'
+					: 'button-hover-class'}"
 				onclick={pausePlayPlayer}
 				disabled={inactive || isAd}
 			>
@@ -1035,7 +1225,11 @@
 			</button>
 			<button
 				id="skip"
-				class="transition {inactive || hasVoteSkipped || isAd ? 'button-disabled-class' : 'button-hover-class'}{hasVoteSkipped ? '!opacity-100 text-accent-600 dark:text-accent-dark-600' : ''} relative"
+				class="transition {inactive || hasVoteSkipped || isAd
+					? 'button-disabled-class'
+					: 'button-hover-class'}{hasVoteSkipped
+					? '!opacity-100 text-accent-600 dark:text-accent-dark-600'
+					: ''} relative"
 				onclick={skip}
 				disabled={hasVoteSkipped || isAd}
 			>
@@ -1050,7 +1244,10 @@
 			</button>
 			<button
 				id="loop"
-				class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.loop > 0 ? ' text-accent-600 dark:text-accent-dark-600' : ''} relative"
+				class="transition {inactive ? 'button-disabled-class' : 'button-hover-class'}{player.loop >
+				0
+					? ' text-accent-600 dark:text-accent-dark-600'
+					: ''} relative"
 				onclick={loop}
 				disabled={inactive}
 			>
@@ -1080,9 +1277,19 @@
 				float
 				formatter={positionFormatter}
 				min={0}
-				max={player.playing.nothingPlaying || player.playing.track?.info.isStream ? 100 : player.playing.duration}
-				value={player.playing.nothingPlaying ? 0 : player.playing.track?.info.isStream ? 100 : position.current}
-				disabled={!hasTrackPermissions || player.playing.duration === 0 || inactive || isAd || player.playing.track?.info.isStream}
+				max={player.playing.nothingPlaying || player.playing.track?.info.isStream
+					? 100
+					: player.playing.duration}
+				value={player.playing.nothingPlaying
+					? 0
+					: player.playing.track?.info.isStream
+						? 100
+						: position.current}
+				disabled={!hasTrackPermissions ||
+					player.playing.duration === 0 ||
+					inactive ||
+					isAd ||
+					player.playing.track?.info.isStream}
 				on:start={positionDragStarted}
 				on:change={positionDragChanged}
 				on:stop={positionDragStopped}
@@ -1091,7 +1298,10 @@
 				{#if player.playing?.track?.info?.isStream}
 					-:--
 				{:else}
-					{msToTimeString(msToTime(!player.playing?.nothingPlaying ? player.playing.duration : 0), true)}
+					{msToTimeString(
+						msToTime(!player.playing?.nothingPlaying ? player.playing.duration : 0),
+						true
+					)}
 				{/if}
 			</span>
 		</div>
@@ -1103,11 +1313,15 @@
 			<button
 				onclick={toggleAutoScroll}
 				id="autoscroll"
-				class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled ? 'text-accent-600 dark:text-accent-dark-600 ' : ''} {lyricsUnsynced === 'full' ? 'button-disabled-class' : 'button-hover-class'} w-5 h-5 mr-2"
+				class="relative transition {lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled
+					? 'text-accent-600 dark:text-accent-dark-600 '
+					: ''} {lyricsUnsynced === 'full'
+					? 'button-disabled-class'
+					: 'button-hover-class'} w-5 h-5 mr-2"
 			>
 				<ListMusicOutline />
 				<span class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 text-xs">
-					{#if lyricsUnsynced !== "full" && lyrics.autoScrollEnabled}
+					{#if lyricsUnsynced !== 'full' && lyrics.autoScrollEnabled}
 						•
 					{/if}
 				</span>
@@ -1151,7 +1365,7 @@
 <Dropdown simple offset={10} triggeredBy="#filter" class="!dropdown-override">
 	<DropdownHeader class="py-2">Filter by requester</DropdownHeader>
 	<DropdownGroup class="!dropdown-group-override">
-		{#each uniqueRequesterTracks.toSorted((a: any, b: any) => a.requesterTag.localeCompare(b.requesterTag)) as track}
+		{#each uniqueRequesterTracks.toSorted( (a: any, b: any) => a.requesterTag.localeCompare(b.requesterTag) ) as track}
 			<DropdownItem class="!dropdown-item-override flex flex-row items-center gap-2">
 				<Checkbox
 					checked={queueSearchFilterIds.includes(track.requesterId)}
@@ -1210,8 +1424,8 @@
 					spanClass="!toggle-span-override"
 					class="!toggle-override"
 					onchange={settingsToggle}
-					disabled={['autolyrics', 'smartqueue'].includes(key) && !hasManageServerPermissions || key === 'stay' && inactive}
-					>{featureMap[key].name}</Toggle
+					disabled={(['autolyrics', 'smartqueue'].includes(key) && !hasManageServerPermissions) ||
+						(key === 'stay' && inactive)}>{featureMap[key].name}</Toggle
 				>
 			</DropdownItem>
 		{/each}
