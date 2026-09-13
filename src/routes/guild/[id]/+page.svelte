@@ -465,20 +465,37 @@
 	}
 	function mute() {
 		if (!inVoiceChannel) return;
-		currentVolume = player.volume === 0 ? 100 : 0;
-		states.socket.emit(
-			'update',
-			[guild.id, { type: 'volume', value: currentVolume }],
-			(response: { status: string }) => {
-				if (response.status !== 'success') {
-					errorToast(`Failed to ${currentVolume === 0 ? 'mute' : 'unmute'} the player.`);
-					currentVolume = -1;
-					return;
+		const isMuted = player.volume === 0;
+
+		if (isMuted) {
+			// Use the unmute API to restore previous volume
+			states.socket.emit(
+				'update',
+				[guild.id, { type: 'unmute' }],
+				(response: { status: string }) => {
+					if (response.status !== 'success') {
+						errorToast('Failed to unmute the player.');
+						return;
+					}
 				}
-				player.volume = currentVolume;
-				currentVolume = -1;
-			}
-		);
+			);
+		} else {
+			// Mute by setting volume to 0
+			currentVolume = 0;
+			states.socket.emit(
+				'update',
+				[guild.id, { type: 'volume', value: 0 }],
+				(response: { status: string }) => {
+					if (response.status !== 'success') {
+						errorToast('Failed to mute the player.');
+						currentVolume = -1;
+						return;
+					}
+					player.volume = 0;
+					currentVolume = -1;
+				}
+			);
+		}
 	}
 	function bassboostToggle() {
 		if (inactive) return;
