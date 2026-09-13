@@ -4,9 +4,11 @@
 	import { Avatar, Dropdown, DropdownDivider, DropdownHeader, DropdownItem } from 'flowbite-svelte';
 	import { getInitials, preload, lazy } from '$lib/util';
 	import { state as states } from '$lib/states.svelte';
+	import { env } from '$env/dynamic/public';
 
 	let { track, position, guildId, userId, hasManageServerPermissions } = $props();
 	let isOpen = $state(false);
+	let isAutoplay = $derived(track.requesterId === env.PUBLIC_DISCORD_CLIENT_ID && !track.isAd);
 
 	function remove() {
 		if (!hasManageServerPermissions && track.requesterId !== userId) return;
@@ -22,10 +24,10 @@
 			<span class="text-xs">Requested by</span>
 			<div class="flex flex-row items-center gap-2">
 				{#await preload(`https://cdn.discordapp.com/avatars/${track.requesterId}/${track.requesterAvatar}.png`) then source}
-					<Avatar src={source} size="xs">{getInitials(track.requesterTag)}</Avatar>
+					<Avatar src={source} size="xs">{getInitials(isAutoplay ? 'Auto-play' : track.requesterTag)}</Avatar>
 				{/await}
-				<span class="font-semibold tracking-tight">{track.requesterTag}</span>
-				{#if track.requesterId === userId}
+				<span class="font-semibold tracking-tight">{isAutoplay ? 'Auto-play' : track.requesterTag}</span>
+				{#if !isAutoplay && track.requesterId === userId}
 					<span class="tracking-tight opacity-50 -ml-1"> (you)</span>
 				{/if}
 			</div>

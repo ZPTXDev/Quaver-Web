@@ -593,6 +593,7 @@
 		states.socket.off('playerDisconnect');
 		states.socket.off('stayFeatureUpdate');
 		states.socket.off('autoLyricsFeatureUpdate');
+		states.socket.off('autoPlayFeatureUpdate');
 		states.socket.off('smartQueueFeatureUpdate');
 
 		// Reset player state
@@ -749,6 +750,9 @@
 			});
 			states.socket.on('autoLyricsFeatureUpdate', (state) => {
 				settings.autolyrics.enabled = state.enabled;
+			});
+			states.socket.on('autoPlayFeatureUpdate', (state) => {
+				settings.autoplay.enabled = state.enabled;
 			});
 			states.socket.on('smartQueueFeatureUpdate', (state) => {
 				settings.smartqueue.enabled = state.enabled;

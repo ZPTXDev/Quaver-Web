@@ -31,6 +31,10 @@ export const featureMap = {
 		id: 'autoLyrics',
 		name: 'Auto Lyrics',
 	},
+	autoplay: {
+		id: 'autoPlay',
+		name: 'Auto-play',
+	},
 	smartqueue: {
 		id: 'smartQueue',
 		name: 'Smart Queue',
