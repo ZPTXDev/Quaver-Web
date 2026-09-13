@@ -27,7 +27,7 @@
 					<Avatar src={source} size="xs">{getInitials(isAutoplay ? 'Auto-play' : track.requesterTag)}</Avatar>
 				{/await}
 				<span class="font-semibold tracking-tight">{isAutoplay ? 'Auto-play' : track.requesterTag}</span>
-				{#if !isAutoplay && track.requesterId === userId}
+				{#if track.requesterId === userId}
 					<span class="tracking-tight opacity-50 -ml-1"> (you)</span>
 				{/if}
 			</div>
