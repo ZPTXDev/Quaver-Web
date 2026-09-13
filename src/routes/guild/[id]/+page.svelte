@@ -75,6 +75,7 @@
 	let addTrackValue = $state('');
 	let queueSearchValue = $state('');
 	let queueSearchFilterIds = $state([] as string[]);
+	let lastRewindClick = $state(0);
 	let player: any = $state({
 		connected: false,
 		playing: {
@@ -381,6 +382,35 @@
 			player.pauseTimeout
 		)
 			return;
+
+		const now = Date.now();
+		const timeSinceLastClick = now - lastRewindClick;
+
+		// If clicked within 2 seconds and at the start (within first 3 seconds), go to previous track
+		if (timeSinceLastClick < 2000 && position.current < 3000) {
+			lastRewindClick = 0; // Reset for next cycle
+			if (player.connected && !player.playing?.nothingPlaying) {
+				states.socket.emit(
+					'update',
+					[guild.id, { type: 'previous' }],
+					(response: { status: string }) => {
+						if (response.status !== 'success') {
+							if (response.status === 'error-ad-playing') {
+								errorToast('Cannot go to previous track while an ad is playing.');
+							} else if (response.status === 'error-no-previous-tracks') {
+								errorToast('No previous tracks in history.');
+							} else {
+								errorToast('Failed to go to previous track.');
+							}
+						}
+					}
+				);
+			}
+			return;
+		}
+
+		// Otherwise, restart the current track
+		lastRewindClick = now;
 		position.dragging = true;
 		position.current = 0;
 		if (player.connected && !player.playing?.nothingPlaying) {
@@ -1460,7 +1490,13 @@
 		Shuffle
 	{/if}
 </Tooltip>
-<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">Rewind to start</Tooltip>
+<Tooltip class="!tooltip-override" arrow={false} triggeredBy="#rewind">
+	{#if Date.now() - lastRewindClick < 2000 && position.current < 3000}
+		Previous track
+	{:else}
+		Restart track
+	{/if}
+</Tooltip>
 <Tooltip class="!tooltip-override" arrow={false} triggeredBy="#pauseplay">
 	{#if !player.paused && !hasTimeout}
 		Pause
