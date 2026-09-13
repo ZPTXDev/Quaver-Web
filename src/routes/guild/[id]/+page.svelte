@@ -1416,7 +1416,7 @@
 	</DropdownItem>
 	{#if !loading && Object.keys(settings).length > 0}
 		<DropdownHeader class="py-2">Settings</DropdownHeader>
-		{#each Object.keys(settings) as key}
+		{#each Object.keys(settings).filter(key => featureMap[key]) as key}
 			<DropdownItem class="!dropdown-item-override">
 				<Toggle
 					checked={settings[key].enabled}
